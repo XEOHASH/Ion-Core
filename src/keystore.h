@@ -18,6 +18,8 @@
 #include "script/script.h"
 #include "script/sign.h"
 
+#include "compressor.h"
+
 #include <boost/variant.hpp>
 
 class CScript;

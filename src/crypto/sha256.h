@@ -1,9 +1,11 @@
-// Copyright (c) 2014 The Bitcoin Core developers
+// Copyright (c) 2009-2016 Satoshi Nakamoto
+// Copyright (c) 2009-2016 The Bitcoin Developers
+// Copyright (c) 2015-2016 Silk Network Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CRYPTO_SHA256_H
-#define BITCOIN_CRYPTO_SHA256_H
+#ifndef SILK_CRYPTO_SHA256_H
+#define SILK_CRYPTO_SHA256_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -25,4 +27,4 @@ public:
     CSHA256& Reset();
 };
 
-#endif // BITCOIN_CRYPTO_SHA256_H
+#endif // SILK_CRYPTO_SHA256_H

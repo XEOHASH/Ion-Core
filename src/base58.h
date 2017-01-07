@@ -25,6 +25,8 @@
 #include "script/script.h"
 #include "script/sign.h"
 
+#include "compressor.h"
+
 #include <string>
 #include <vector>
 

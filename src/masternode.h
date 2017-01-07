@@ -21,6 +21,8 @@
 #include "script/ionconsensus.h"
 #include "script/script.h"
 #include "script/sign.h"
+
+#include "compressor.h"
 #include "masternode.h"
 
 class uint256;

@@ -6,7 +6,10 @@
 #include "activemasternode.h"
 #include "masternodeman.h"
 #include <boost/lexical_cast.hpp>
-#include "clientversion.h"
+
+#if defined(HAVE_CONFIG_H)
+#include "config/ion-config.h"
+#endif
 
 //
 // Bootup the masternode, look for a 20000 ION input and register on the network

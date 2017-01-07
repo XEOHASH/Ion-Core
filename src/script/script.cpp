@@ -5,17 +5,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-
-#include "script/interpreter.h"
-#include "script/script_error.h"
-#include "script/sigcache.h"
-#include "script/standard.h"
-#include "script/ionconsensus.h"
 #include "script/script.h"
-#include "script/sign.h"
+#include "compressor.h"
 
 #include "tinyformat.h"
-#include "utilstrencodings.h"
+#include "util.h"
 
 namespace {
 inline std::string ValueString(const std::vector<unsigned char>& vch)

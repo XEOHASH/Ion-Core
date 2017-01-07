@@ -24,6 +24,8 @@
 #include "script/ionconsensus.h"
 #include "script/script.h"
 #include "script/sign.h"
+
+#include "compressor.h"
 #include "ui_interface.h"
 #include "util.h"
 #include "stealth.h"

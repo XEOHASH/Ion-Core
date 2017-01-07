@@ -3,7 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "base58.h"
-#include "clientversion.h"
+#if defined(HAVE_CONFIG_H)
+#include "config/ion-config.h"
+#endif
 #include "main.h"
 #include "keystore.h"
 
@@ -14,6 +16,8 @@
 #include "script/ionconsensus.h"
 #include "script/script.h"
 #include "script/sign.h"
+
+#include "compressor.h"
 #include "ui_interface.h" // for _(...)
 #include "univalue/univalue.h"
 #include "util.h"

@@ -9,6 +9,7 @@
 #define ION_SCRIPT_SIGCACHE_H
 
 #include "script/interpreter.h"
+#include "primitives/transaction.h"
 
 #include <vector>
 

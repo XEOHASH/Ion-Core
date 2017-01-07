@@ -13,6 +13,8 @@
 #include "script/script.h"
 #include "script/sign.h"
 
+#include "compressor.h"
+
 
 bool CKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
 {

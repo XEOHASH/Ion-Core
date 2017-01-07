@@ -9,7 +9,7 @@
 #include "sync.h"
 #include "net.h"
 #include "key.h"
-#include "core.h"
+#include "primitives/transaction.h"
 #include "util.h"
 
 #include "script/interpreter.h"
@@ -19,6 +19,8 @@
 #include "script/ionconsensus.h"
 #include "script/script.h"
 #include "script/sign.h"
+
+#include "compressor.h"
 #include "base58.h"
 #include "main.h"
 

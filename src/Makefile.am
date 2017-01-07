@@ -105,7 +105,13 @@ ION_CORE_H = \
   rpcclient.h \
   rpcprotocol.h \
   rpcserver.h \
-  script.h \
+  script/interpreter.h \
+  script/script.h \
+  script/sigcache.h \
+  script/sign.h \
+  script/standard.h \
+  script/script_error.h \
+  compressor.h \
   scrypt.h \
   serialize.h \
   smessage.h \
@@ -153,6 +159,7 @@ libion_server_a_SOURCES = \
   rpcserver.cpp \
   timedata.cpp \
   txmempool.cpp \
+  script/sigcache.cpp \
   $(ION_CORE_H)
 
 if ENABLE_ZMQ
@@ -215,6 +222,7 @@ libion_common_a_SOURCES = \
   allocators.cpp \
   base58.cpp \
   chainparams.cpp \
+  compressor.cpp \
   ecwrapper.cpp \
   hash.cpp \
   key.cpp \
@@ -222,7 +230,11 @@ libion_common_a_SOURCES = \
   netbase.cpp \
   protocol.cpp \
   pubkey.cpp \
-  script.cpp \
+  script/interpreter.cpp \
+  script/script.cpp \
+  script/sign.cpp \
+  script/standard.cpp \
+  script/script_error.cpp \
   spork.cpp \
   $(ION_CORE_H)
 
@@ -328,6 +340,7 @@ ion_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 if BUILD_ION_LIBS
 include_HEADERS = script/ionconsensus.h
 libionconsensus_la_SOURCES = \
+  script/ionconsensus_dummy.cpp \
   allocators.cpp \
   crypto/hmac_sha256.cpp \
   crypto/hmac_sha512.cpp \
@@ -338,8 +351,10 @@ libionconsensus_la_SOURCES = \
   ecwrapper.cpp \
   hash.cpp \
   pubkey.cpp \
-  script.cpp \
-  utilstrencodings.cpp
+  utilstrencodings.cpp \
+  script/script.cpp \
+  script/interpreter.cpp \
+  script/ionconsensus.cpp
 
 #if GLIBC_BACK_COMPAT
 #  libionconsensus_la_SOURCES += compat/glibc_compat.cpp
@@ -366,6 +381,7 @@ CLEANFILES += univalue/*.gcda univalue/*.gcno
 CLEANFILES += wallet/*.gcda wallet/*.gcno
 CLEANFILES += wallet/test/*.gcda wallet/test/*.gcno
 CLEANFILES += zmq/*.gcda zmq/*.gcno
+CLEANFILES += script/*.gcda script/*.gcno
 
 DISTCLEANFILES = obj/build.h
 

@@ -66,7 +66,7 @@ void init_blockindex(leveldb::Options& options, bool fRemoveOld = false) {
 
 // CDB subclasses are created and destroyed VERY OFTEN. That's why
 // we shouldn't treat this as a free operations.
-CTxDB::CTxDB(const char* pszMode)
+CLevelDBWrapper::CLevelDBWrapper(const char* pszMode)
 {
     assert(pszMode);
     activeBatch = NULL;
@@ -121,7 +121,7 @@ CTxDB::CTxDB(const char* pszMode)
     LogPrintf("Opened LevelDB successfully\n");
 }
 
-void CTxDB::Close()
+void CLevelDBWrapper::Close()
 {
     delete txdb;
     txdb = pdb = NULL;
@@ -133,14 +133,14 @@ void CTxDB::Close()
     activeBatch = NULL;
 }
 
-bool CTxDB::TxnBegin()
+bool CLevelDBWrapper::TxnBegin()
 {
     assert(!activeBatch);
     activeBatch = new leveldb::WriteBatch();
     return true;
 }
 
-bool CTxDB::TxnCommit()
+bool CLevelDBWrapper::TxnCommit()
 {
     assert(activeBatch);
     leveldb::Status status = pdb->Write(leveldb::WriteOptions(), activeBatch);
@@ -183,7 +183,7 @@ public:
 // a database transaction begins reads are consistent with it. It would be good
 // to change that assumption in future and avoid the performance hit, though in
 // practice it does not appear to be large.
-bool CTxDB::ScanBatch(const CDataStream &key, string *value, bool *deleted) const {
+bool CLevelDBWrapper::ScanBatch(const CDataStream &key, string *value, bool *deleted) const {
     assert(activeBatch);
     *deleted = false;
     CBatchScanner scanner;
@@ -197,7 +197,7 @@ bool CTxDB::ScanBatch(const CDataStream &key, string *value, bool *deleted) cons
     return scanner.foundEntry;
 }
 
-bool CTxDB::WriteAddrIndex(uint160 addrHash, uint256 txHash)
+bool CLevelDBWrapper::WriteAddrIndex(uint160 addrHash, uint256 txHash)
 {
     std::vector<uint256> txHashes;
     if(!ReadAddrIndex(addrHash, txHashes))
@@ -219,23 +219,23 @@ bool CTxDB::WriteAddrIndex(uint160 addrHash, uint256 txHash)
     }
 }
 
-bool CTxDB::ReadAddrIndex(uint160 addrHash, std::vector<uint256>& txHashes)
+bool CLevelDBWrapper::ReadAddrIndex(uint160 addrHash, std::vector<uint256>& txHashes)
 {
     return Read(make_pair(string("adr"), addrHash), txHashes);
 }
 
-bool CTxDB::ReadTxIndex(uint256 hash, CTxIndex& txindex)
+bool CLevelDBWrapper::ReadTxIndex(uint256 hash, CTxIndex& txindex)
 {
     txindex.SetNull();
     return Read(make_pair(string("tx"), hash), txindex);
 }
 
-bool CTxDB::UpdateTxIndex(uint256 hash, const CTxIndex& txindex)
+bool CLevelDBWrapper::UpdateTxIndex(uint256 hash, const CTxIndex& txindex)
 {
     return Write(make_pair(string("tx"), hash), txindex);
 }
 
-bool CTxDB::AddTxIndex(const CTransaction& tx, const CDiskTxPos& pos, int nHeight)
+bool CLevelDBWrapper::AddTxIndex(const CTransaction& tx, const CDiskTxPos& pos, int nHeight)
 {
     // Add to tx index
     uint256 hash = tx.GetHash();
@@ -243,19 +243,19 @@ bool CTxDB::AddTxIndex(const CTransaction& tx, const CDiskTxPos& pos, int nHeigh
     return Write(make_pair(string("tx"), hash), txindex);
 }
 
-bool CTxDB::EraseTxIndex(const CTransaction& tx)
+bool CLevelDBWrapper::EraseTxIndex(const CTransaction& tx)
 {
     uint256 hash = tx.GetHash();
 
     return Erase(make_pair(string("tx"), hash));
 }
 
-bool CTxDB::ContainsTx(uint256 hash)
+bool CLevelDBWrapper::ContainsTx(uint256 hash)
 {
     return Exists(make_pair(string("tx"), hash));
 }
 
-bool CTxDB::ReadDiskTx(uint256 hash, CTransaction& tx, CTxIndex& txindex)
+bool CLevelDBWrapper::ReadDiskTx(uint256 hash, CTransaction& tx, CTxIndex& txindex)
 {
     tx.SetNull();
     if (!ReadTxIndex(hash, txindex))
@@ -263,44 +263,44 @@ bool CTxDB::ReadDiskTx(uint256 hash, CTransaction& tx, CTxIndex& txindex)
     return (tx.ReadFromDisk(txindex.pos));
 }
 
-bool CTxDB::ReadDiskTx(uint256 hash, CTransaction& tx)
+bool CLevelDBWrapper::ReadDiskTx(uint256 hash, CTransaction& tx)
 {
     CTxIndex txindex;
     return ReadDiskTx(hash, tx, txindex);
 }
 
-bool CTxDB::ReadDiskTx(COutPoint outpoint, CTransaction& tx, CTxIndex& txindex)
+bool CLevelDBWrapper::ReadDiskTx(COutPoint outpoint, CTransaction& tx, CTxIndex& txindex)
 {
     return ReadDiskTx(outpoint.hash, tx, txindex);
 }
 
-bool CTxDB::ReadDiskTx(COutPoint outpoint, CTransaction& tx)
+bool CLevelDBWrapper::ReadDiskTx(COutPoint outpoint, CTransaction& tx)
 {
     CTxIndex txindex;
     return ReadDiskTx(outpoint.hash, tx, txindex);
 }
 
-bool CTxDB::WriteBlockIndex(const CDiskBlockIndex& blockindex)
+bool CLevelDBWrapper::WriteBlockIndex(const CDiskBlockIndex& blockindex)
 {
     return Write(make_pair(string("blockindex"), blockindex.GetBlockHash()), blockindex);
 }
 
-bool CTxDB::ReadHashBestChain(uint256& hashBestChain)
+bool CLevelDBWrapper::ReadHashBestChain(uint256& hashBestChain)
 {
     return Read(string("hashBestChain"), hashBestChain);
 }
 
-bool CTxDB::WriteHashBestChain(uint256 hashBestChain)
+bool CLevelDBWrapper::WriteHashBestChain(uint256 hashBestChain)
 {
     return Write(string("hashBestChain"), hashBestChain);
 }
 
-bool CTxDB::ReadBestInvalidTrust(CBigNum& bnBestInvalidTrust)
+bool CLevelDBWrapper::ReadBestInvalidTrust(CBigNum& bnBestInvalidTrust)
 {
     return Read(string("bnBestInvalidTrust"), bnBestInvalidTrust);
 }
 
-bool CTxDB::WriteBestInvalidTrust(CBigNum bnBestInvalidTrust)
+bool CLevelDBWrapper::WriteBestInvalidTrust(CBigNum bnBestInvalidTrust)
 {
     return Write(string("bnBestInvalidTrust"), bnBestInvalidTrust);
 }
@@ -325,7 +325,7 @@ static CBlockIndex *InsertBlockIndex(uint256 hash)
     return pindexNew;
 }
 
-bool CTxDB::LoadBlockIndex()
+bool CLevelDBWrapper::LoadBlockIndex()
 {
     if (mapBlockIndex.size() > 0) {
         // Already loaded once in this session. It can happen during migration
@@ -419,10 +419,10 @@ bool CTxDB::LoadBlockIndex()
     {
         if (pindexGenesisBlock == NULL)
             return true;
-        return error("CTxDB::LoadBlockIndex() : hashBestChain not loaded");
+        return error("CLevelDBWrapper::LoadBlockIndex() : hashBestChain not loaded");
     }
     if (!mapBlockIndex.count(hashBestChain))
-        return error("CTxDB::LoadBlockIndex() : hashBestChain not found in the block index");
+        return error("CLevelDBWrapper::LoadBlockIndex() : hashBestChain not found in the block index");
     pindexBest = mapBlockIndex[hashBestChain];
     nBestHeight = pindexBest->nHeight;
     nBestChainTrust = pindexBest->nChainTrust;
@@ -560,7 +560,7 @@ bool CTxDB::LoadBlockIndex()
         CBlock block;
         if (!block.ReadFromDisk(pindexFork))
             return error("LoadBlockIndex() : block.ReadFromDisk failed");
-        CTxDB txdb;
+        CLevelDBWrapper txdb;
         block.SetBestChain(txdb, pindexFork);
     }
 

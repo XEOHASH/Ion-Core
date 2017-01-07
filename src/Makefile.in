@@ -252,13 +252,18 @@ libion_common_a_LIBADD =
 am_libion_common_a_OBJECTS = libion_common_a-allocators.$(OBJEXT) \
 	libion_common_a-base58.$(OBJEXT) \
 	libion_common_a-chainparams.$(OBJEXT) \
+	libion_common_a-compressor.$(OBJEXT) \
 	libion_common_a-ecwrapper.$(OBJEXT) \
 	libion_common_a-hash.$(OBJEXT) libion_common_a-key.$(OBJEXT) \
 	libion_common_a-keystore.$(OBJEXT) \
 	libion_common_a-netbase.$(OBJEXT) \
 	libion_common_a-protocol.$(OBJEXT) \
 	libion_common_a-pubkey.$(OBJEXT) \
-	libion_common_a-script.$(OBJEXT) \
+	script/libion_common_a-interpreter.$(OBJEXT) \
+	script/libion_common_a-script.$(OBJEXT) \
+	script/libion_common_a-sign.$(OBJEXT) \
+	script/libion_common_a-standard.$(OBJEXT) \
+	script/libion_common_a-script_error.$(OBJEXT) \
 	libion_common_a-spork.$(OBJEXT) $(am__objects_3)
 libion_common_a_OBJECTS = $(am_libion_common_a_OBJECTS)
 libion_server_a_AR = $(AR) $(ARFLAGS)
@@ -276,7 +281,8 @@ am_libion_server_a_OBJECTS = libion_server_a-alert.$(OBJEXT) \
 	libion_server_a-rpcrawtransaction.$(OBJEXT) \
 	libion_server_a-rpcserver.$(OBJEXT) \
 	libion_server_a-timedata.$(OBJEXT) \
-	libion_server_a-txmempool.$(OBJEXT) $(am__objects_3)
+	libion_server_a-txmempool.$(OBJEXT) \
+	script/libion_server_a-sigcache.$(OBJEXT) $(am__objects_3)
 libion_server_a_OBJECTS = $(am_libion_server_a_OBJECTS)
 libion_util_a_AR = $(AR) $(ARFLAGS)
 libion_util_a_LIBADD =
@@ -576,12 +582,13 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 @BUILD_ION_LIBS_TRUE@libionconsensus_la_DEPENDENCIES =  \
 @BUILD_ION_LIBS_TRUE@	$(LIBSECP256K1)
-am__libionconsensus_la_SOURCES_DIST = allocators.cpp \
-	crypto/hmac_sha256.cpp crypto/hmac_sha512.cpp \
+am__libionconsensus_la_SOURCES_DIST = script/ionconsensus_dummy.cpp \
+	allocators.cpp crypto/hmac_sha256.cpp crypto/hmac_sha512.cpp \
 	crypto/ripemd160.cpp crypto/sha1.cpp crypto/sha256.cpp \
-	crypto/sha512.cpp ecwrapper.cpp hash.cpp pubkey.cpp script.cpp \
-	utilstrencodings.cpp
-@BUILD_ION_LIBS_TRUE@am_libionconsensus_la_OBJECTS =  \
+	crypto/sha512.cpp ecwrapper.cpp hash.cpp pubkey.cpp \
+	utilstrencodings.cpp script/script.cpp script/interpreter.cpp \
+	script/ionconsensus.cpp
+@BUILD_ION_LIBS_TRUE@am_libionconsensus_la_OBJECTS = script/libionconsensus_la-ionconsensus_dummy.lo \
 @BUILD_ION_LIBS_TRUE@	libionconsensus_la-allocators.lo \
 @BUILD_ION_LIBS_TRUE@	crypto/libionconsensus_la-hmac_sha256.lo \
 @BUILD_ION_LIBS_TRUE@	crypto/libionconsensus_la-hmac_sha512.lo \
@@ -592,8 +599,10 @@ am__libionconsensus_la_SOURCES_DIST = allocators.cpp \
 @BUILD_ION_LIBS_TRUE@	libionconsensus_la-ecwrapper.lo \
 @BUILD_ION_LIBS_TRUE@	libionconsensus_la-hash.lo \
 @BUILD_ION_LIBS_TRUE@	libionconsensus_la-pubkey.lo \
-@BUILD_ION_LIBS_TRUE@	libionconsensus_la-script.lo \
-@BUILD_ION_LIBS_TRUE@	libionconsensus_la-utilstrencodings.lo
+@BUILD_ION_LIBS_TRUE@	libionconsensus_la-utilstrencodings.lo \
+@BUILD_ION_LIBS_TRUE@	script/libionconsensus_la-script.lo \
+@BUILD_ION_LIBS_TRUE@	script/libionconsensus_la-interpreter.lo \
+@BUILD_ION_LIBS_TRUE@	script/libionconsensus_la-ionconsensus.lo
 libionconsensus_la_OBJECTS = $(am_libionconsensus_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -1314,7 +1323,13 @@ ION_CORE_H = \
   rpcclient.h \
   rpcprotocol.h \
   rpcserver.h \
-  script.h \
+  script/interpreter.h \
+  script/script.h \
+  script/sigcache.h \
+  script/sign.h \
+  script/standard.h \
+  script/script_error.h \
+  compressor.h \
   scrypt.h \
   serialize.h \
   smessage.h \
@@ -1357,6 +1372,7 @@ libion_server_a_SOURCES = \
   rpcserver.cpp \
   timedata.cpp \
   txmempool.cpp \
+  script/sigcache.cpp \
   $(ION_CORE_H)
 
 @ENABLE_ZMQ_TRUE@LIBION_ZMQ = libion_zmq.a
@@ -1417,6 +1433,7 @@ libion_common_a_SOURCES = \
   allocators.cpp \
   base58.cpp \
   chainparams.cpp \
+  compressor.cpp \
   ecwrapper.cpp \
   hash.cpp \
   key.cpp \
@@ -1424,7 +1441,11 @@ libion_common_a_SOURCES = \
   netbase.cpp \
   protocol.cpp \
   pubkey.cpp \
-  script.cpp \
+  script/interpreter.cpp \
+  script/script.cpp \
+  script/sign.cpp \
+  script/standard.cpp \
+  script/script_error.cpp \
   spork.cpp \
   $(ION_CORE_H)
 
@@ -1493,6 +1514,7 @@ ion_tx_LDADD = $(LIBUNIVALUE) $(LIBION_COMMON) $(LIBION_UTIL) \
 # ionconsensus library #
 @BUILD_ION_LIBS_TRUE@include_HEADERS = script/ionconsensus.h
 @BUILD_ION_LIBS_TRUE@libionconsensus_la_SOURCES = \
+@BUILD_ION_LIBS_TRUE@  script/ionconsensus_dummy.cpp \
 @BUILD_ION_LIBS_TRUE@  allocators.cpp \
 @BUILD_ION_LIBS_TRUE@  crypto/hmac_sha256.cpp \
 @BUILD_ION_LIBS_TRUE@  crypto/hmac_sha512.cpp \
@@ -1503,8 +1525,10 @@ ion_tx_LDADD = $(LIBUNIVALUE) $(LIBION_COMMON) $(LIBION_UTIL) \
 @BUILD_ION_LIBS_TRUE@  ecwrapper.cpp \
 @BUILD_ION_LIBS_TRUE@  hash.cpp \
 @BUILD_ION_LIBS_TRUE@  pubkey.cpp \
-@BUILD_ION_LIBS_TRUE@  script.cpp \
-@BUILD_ION_LIBS_TRUE@  utilstrencodings.cpp
+@BUILD_ION_LIBS_TRUE@  utilstrencodings.cpp \
+@BUILD_ION_LIBS_TRUE@  script/script.cpp \
+@BUILD_ION_LIBS_TRUE@  script/interpreter.cpp \
+@BUILD_ION_LIBS_TRUE@  script/ionconsensus.cpp
 
 
 #if GLIBC_BACK_COMPAT
@@ -1522,7 +1546,8 @@ CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno \
 	primitives/*.gcda primitives/*.gcno script/*.gcda \
 	script/*.gcno support/*.gcda support/*.gcno univalue/*.gcda \
 	univalue/*.gcno wallet/*.gcda wallet/*.gcno wallet/test/*.gcda \
-	wallet/test/*.gcno zmq/*.gcda zmq/*.gcno $(am__append_25)
+	wallet/test/*.gcno zmq/*.gcda zmq/*.gcno script/*.gcda \
+	script/*.gcno $(am__append_25)
 DISTCLEANFILES = obj/build.h
 EXTRA_DIST = leveldb
 @EMBEDDED_LEVELDB_TRUE@LIBLEVELDB_INT = leveldb/libleveldb.a
@@ -2200,11 +2225,29 @@ libion_cli.a: $(libion_cli_a_OBJECTS) $(libion_cli_a_DEPENDENCIES) $(EXTRA_libio
 	$(AM_V_at)-rm -f libion_cli.a
 	$(AM_V_AR)$(libion_cli_a_AR) libion_cli.a $(libion_cli_a_OBJECTS) $(libion_cli_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libion_cli.a
+script/$(am__dirstamp):
+	@$(MKDIR_P) script
+	@: > script/$(am__dirstamp)
+script/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) script/$(DEPDIR)
+	@: > script/$(DEPDIR)/$(am__dirstamp)
+script/libion_common_a-interpreter.$(OBJEXT): script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
+script/libion_common_a-script.$(OBJEXT): script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
+script/libion_common_a-sign.$(OBJEXT): script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
+script/libion_common_a-standard.$(OBJEXT): script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
+script/libion_common_a-script_error.$(OBJEXT): script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
 
 libion_common.a: $(libion_common_a_OBJECTS) $(libion_common_a_DEPENDENCIES) $(EXTRA_libion_common_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libion_common.a
 	$(AM_V_AR)$(libion_common_a_AR) libion_common.a $(libion_common_a_OBJECTS) $(libion_common_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libion_common.a
+script/libion_server_a-sigcache.$(OBJEXT): script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
 
 libion_server.a: $(libion_server_a_OBJECTS) $(libion_server_a_DEPENDENCIES) $(EXTRA_libion_server_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libion_server.a
@@ -2501,6 +2544,8 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+script/libionconsensus_la-ionconsensus_dummy.lo:  \
+	script/$(am__dirstamp) script/$(DEPDIR)/$(am__dirstamp)
 crypto/libionconsensus_la-hmac_sha256.lo: crypto/$(am__dirstamp) \
 	crypto/$(DEPDIR)/$(am__dirstamp)
 crypto/libionconsensus_la-hmac_sha512.lo: crypto/$(am__dirstamp) \
@@ -2513,6 +2558,12 @@ crypto/libionconsensus_la-sha256.lo: crypto/$(am__dirstamp) \
 	crypto/$(DEPDIR)/$(am__dirstamp)
 crypto/libionconsensus_la-sha512.lo: crypto/$(am__dirstamp) \
 	crypto/$(DEPDIR)/$(am__dirstamp)
+script/libionconsensus_la-script.lo: script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
+script/libionconsensus_la-interpreter.lo: script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
+script/libionconsensus_la-ionconsensus.lo: script/$(am__dirstamp) \
+	script/$(DEPDIR)/$(am__dirstamp)
 
 libionconsensus.la: $(libionconsensus_la_OBJECTS) $(libionconsensus_la_DEPENDENCIES) $(EXTRA_libionconsensus_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(libionconsensus_la_LINK) $(am_libionconsensus_la_rpath) $(libionconsensus_la_OBJECTS) $(libionconsensus_la_LIBADD) $(LIBS)
@@ -2610,6 +2661,8 @@ mostlyclean-compile:
 	-rm -f qt/moc_plugins/mrichtexteditor/*.$(OBJEXT)
 	-rm -f qt/plugins/mrichtexteditor/*.$(OBJEXT)
 	-rm -f qt/res/*.$(OBJEXT)
+	-rm -f script/*.$(OBJEXT)
+	-rm -f script/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -2621,6 +2674,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-allocators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-base58.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-chainparams.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-compressor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-ecwrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-key.Po@am__quote@
@@ -2628,7 +2682,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-netbase.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-protocol.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-pubkey.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-script.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-spork.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-alert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-checkpoints.Po@am__quote@
@@ -2671,7 +2724,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-ecwrapper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-hash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-pubkey.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-script.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-utilstrencodings.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/libion_util_a-glibc_sanity.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/libion_util_a-glibcxx_sanity.Po@am__quote@
@@ -2835,6 +2887,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@qt/$(DEPDIR)/qt_libionqt_a-walletmodeltransaction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/moc_plugins/mrichtexteditor/$(DEPDIR)/qt_libionqt_a-mrichtextedit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/plugins/mrichtexteditor/$(DEPDIR)/qt_libionqt_a-mrichtextedit.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-interpreter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-script.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-script_error.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-sign.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-standard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_server_a-sigcache.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-interpreter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-ionconsensus.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-ionconsensus_dummy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-script.Plo@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -3588,6 +3650,20 @@ libion_common_a-chainparams.obj: chainparams.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_common_a-chainparams.obj `if test -f 'chainparams.cpp'; then $(CYGPATH_W) 'chainparams.cpp'; else $(CYGPATH_W) '$(srcdir)/chainparams.cpp'; fi`
 
+libion_common_a-compressor.o: compressor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-compressor.o -MD -MP -MF $(DEPDIR)/libion_common_a-compressor.Tpo -c -o libion_common_a-compressor.o `test -f 'compressor.cpp' || echo '$(srcdir)/'`compressor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_common_a-compressor.Tpo $(DEPDIR)/libion_common_a-compressor.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='compressor.cpp' object='libion_common_a-compressor.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_common_a-compressor.o `test -f 'compressor.cpp' || echo '$(srcdir)/'`compressor.cpp
+
+libion_common_a-compressor.obj: compressor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-compressor.obj -MD -MP -MF $(DEPDIR)/libion_common_a-compressor.Tpo -c -o libion_common_a-compressor.obj `if test -f 'compressor.cpp'; then $(CYGPATH_W) 'compressor.cpp'; else $(CYGPATH_W) '$(srcdir)/compressor.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_common_a-compressor.Tpo $(DEPDIR)/libion_common_a-compressor.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='compressor.cpp' object='libion_common_a-compressor.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_common_a-compressor.obj `if test -f 'compressor.cpp'; then $(CYGPATH_W) 'compressor.cpp'; else $(CYGPATH_W) '$(srcdir)/compressor.cpp'; fi`
+
 libion_common_a-ecwrapper.o: ecwrapper.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-ecwrapper.o -MD -MP -MF $(DEPDIR)/libion_common_a-ecwrapper.Tpo -c -o libion_common_a-ecwrapper.o `test -f 'ecwrapper.cpp' || echo '$(srcdir)/'`ecwrapper.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_common_a-ecwrapper.Tpo $(DEPDIR)/libion_common_a-ecwrapper.Po
@@ -3686,19 +3762,75 @@ libion_common_a-pubkey.obj: pubkey.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_common_a-pubkey.obj `if test -f 'pubkey.cpp'; then $(CYGPATH_W) 'pubkey.cpp'; else $(CYGPATH_W) '$(srcdir)/pubkey.cpp'; fi`
 
-libion_common_a-script.o: script.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-script.o -MD -MP -MF $(DEPDIR)/libion_common_a-script.Tpo -c -o libion_common_a-script.o `test -f 'script.cpp' || echo '$(srcdir)/'`script.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_common_a-script.Tpo $(DEPDIR)/libion_common_a-script.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script.cpp' object='libion_common_a-script.o' libtool=no @AMDEPBACKSLASH@
+script/libion_common_a-interpreter.o: script/interpreter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-interpreter.o -MD -MP -MF script/$(DEPDIR)/libion_common_a-interpreter.Tpo -c -o script/libion_common_a-interpreter.o `test -f 'script/interpreter.cpp' || echo '$(srcdir)/'`script/interpreter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-interpreter.Tpo script/$(DEPDIR)/libion_common_a-interpreter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/interpreter.cpp' object='script/libion_common_a-interpreter.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_common_a-script.o `test -f 'script.cpp' || echo '$(srcdir)/'`script.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-interpreter.o `test -f 'script/interpreter.cpp' || echo '$(srcdir)/'`script/interpreter.cpp
 
-libion_common_a-script.obj: script.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-script.obj -MD -MP -MF $(DEPDIR)/libion_common_a-script.Tpo -c -o libion_common_a-script.obj `if test -f 'script.cpp'; then $(CYGPATH_W) 'script.cpp'; else $(CYGPATH_W) '$(srcdir)/script.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_common_a-script.Tpo $(DEPDIR)/libion_common_a-script.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script.cpp' object='libion_common_a-script.obj' libtool=no @AMDEPBACKSLASH@
+script/libion_common_a-interpreter.obj: script/interpreter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-interpreter.obj -MD -MP -MF script/$(DEPDIR)/libion_common_a-interpreter.Tpo -c -o script/libion_common_a-interpreter.obj `if test -f 'script/interpreter.cpp'; then $(CYGPATH_W) 'script/interpreter.cpp'; else $(CYGPATH_W) '$(srcdir)/script/interpreter.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-interpreter.Tpo script/$(DEPDIR)/libion_common_a-interpreter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/interpreter.cpp' object='script/libion_common_a-interpreter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_common_a-script.obj `if test -f 'script.cpp'; then $(CYGPATH_W) 'script.cpp'; else $(CYGPATH_W) '$(srcdir)/script.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-interpreter.obj `if test -f 'script/interpreter.cpp'; then $(CYGPATH_W) 'script/interpreter.cpp'; else $(CYGPATH_W) '$(srcdir)/script/interpreter.cpp'; fi`
+
+script/libion_common_a-script.o: script/script.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-script.o -MD -MP -MF script/$(DEPDIR)/libion_common_a-script.Tpo -c -o script/libion_common_a-script.o `test -f 'script/script.cpp' || echo '$(srcdir)/'`script/script.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-script.Tpo script/$(DEPDIR)/libion_common_a-script.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/script.cpp' object='script/libion_common_a-script.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-script.o `test -f 'script/script.cpp' || echo '$(srcdir)/'`script/script.cpp
+
+script/libion_common_a-script.obj: script/script.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-script.obj -MD -MP -MF script/$(DEPDIR)/libion_common_a-script.Tpo -c -o script/libion_common_a-script.obj `if test -f 'script/script.cpp'; then $(CYGPATH_W) 'script/script.cpp'; else $(CYGPATH_W) '$(srcdir)/script/script.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-script.Tpo script/$(DEPDIR)/libion_common_a-script.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/script.cpp' object='script/libion_common_a-script.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-script.obj `if test -f 'script/script.cpp'; then $(CYGPATH_W) 'script/script.cpp'; else $(CYGPATH_W) '$(srcdir)/script/script.cpp'; fi`
+
+script/libion_common_a-sign.o: script/sign.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-sign.o -MD -MP -MF script/$(DEPDIR)/libion_common_a-sign.Tpo -c -o script/libion_common_a-sign.o `test -f 'script/sign.cpp' || echo '$(srcdir)/'`script/sign.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-sign.Tpo script/$(DEPDIR)/libion_common_a-sign.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/sign.cpp' object='script/libion_common_a-sign.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-sign.o `test -f 'script/sign.cpp' || echo '$(srcdir)/'`script/sign.cpp
+
+script/libion_common_a-sign.obj: script/sign.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-sign.obj -MD -MP -MF script/$(DEPDIR)/libion_common_a-sign.Tpo -c -o script/libion_common_a-sign.obj `if test -f 'script/sign.cpp'; then $(CYGPATH_W) 'script/sign.cpp'; else $(CYGPATH_W) '$(srcdir)/script/sign.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-sign.Tpo script/$(DEPDIR)/libion_common_a-sign.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/sign.cpp' object='script/libion_common_a-sign.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-sign.obj `if test -f 'script/sign.cpp'; then $(CYGPATH_W) 'script/sign.cpp'; else $(CYGPATH_W) '$(srcdir)/script/sign.cpp'; fi`
+
+script/libion_common_a-standard.o: script/standard.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-standard.o -MD -MP -MF script/$(DEPDIR)/libion_common_a-standard.Tpo -c -o script/libion_common_a-standard.o `test -f 'script/standard.cpp' || echo '$(srcdir)/'`script/standard.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-standard.Tpo script/$(DEPDIR)/libion_common_a-standard.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/standard.cpp' object='script/libion_common_a-standard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-standard.o `test -f 'script/standard.cpp' || echo '$(srcdir)/'`script/standard.cpp
+
+script/libion_common_a-standard.obj: script/standard.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-standard.obj -MD -MP -MF script/$(DEPDIR)/libion_common_a-standard.Tpo -c -o script/libion_common_a-standard.obj `if test -f 'script/standard.cpp'; then $(CYGPATH_W) 'script/standard.cpp'; else $(CYGPATH_W) '$(srcdir)/script/standard.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-standard.Tpo script/$(DEPDIR)/libion_common_a-standard.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/standard.cpp' object='script/libion_common_a-standard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-standard.obj `if test -f 'script/standard.cpp'; then $(CYGPATH_W) 'script/standard.cpp'; else $(CYGPATH_W) '$(srcdir)/script/standard.cpp'; fi`
+
+script/libion_common_a-script_error.o: script/script_error.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-script_error.o -MD -MP -MF script/$(DEPDIR)/libion_common_a-script_error.Tpo -c -o script/libion_common_a-script_error.o `test -f 'script/script_error.cpp' || echo '$(srcdir)/'`script/script_error.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-script_error.Tpo script/$(DEPDIR)/libion_common_a-script_error.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/script_error.cpp' object='script/libion_common_a-script_error.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-script_error.o `test -f 'script/script_error.cpp' || echo '$(srcdir)/'`script/script_error.cpp
+
+script/libion_common_a-script_error.obj: script/script_error.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_common_a-script_error.obj -MD -MP -MF script/$(DEPDIR)/libion_common_a-script_error.Tpo -c -o script/libion_common_a-script_error.obj `if test -f 'script/script_error.cpp'; then $(CYGPATH_W) 'script/script_error.cpp'; else $(CYGPATH_W) '$(srcdir)/script/script_error.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_common_a-script_error.Tpo script/$(DEPDIR)/libion_common_a-script_error.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/script_error.cpp' object='script/libion_common_a-script_error.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_common_a-script_error.obj `if test -f 'script/script_error.cpp'; then $(CYGPATH_W) 'script/script_error.cpp'; else $(CYGPATH_W) '$(srcdir)/script/script_error.cpp'; fi`
 
 libion_common_a-spork.o: spork.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-spork.o -MD -MP -MF $(DEPDIR)/libion_common_a-spork.Tpo -c -o libion_common_a-spork.o `test -f 'spork.cpp' || echo '$(srcdir)/'`spork.cpp
@@ -3937,6 +4069,20 @@ libion_server_a-txmempool.obj: txmempool.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='txmempool.cpp' object='libion_server_a-txmempool.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-txmempool.obj `if test -f 'txmempool.cpp'; then $(CYGPATH_W) 'txmempool.cpp'; else $(CYGPATH_W) '$(srcdir)/txmempool.cpp'; fi`
+
+script/libion_server_a-sigcache.o: script/sigcache.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_server_a-sigcache.o -MD -MP -MF script/$(DEPDIR)/libion_server_a-sigcache.Tpo -c -o script/libion_server_a-sigcache.o `test -f 'script/sigcache.cpp' || echo '$(srcdir)/'`script/sigcache.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_server_a-sigcache.Tpo script/$(DEPDIR)/libion_server_a-sigcache.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/sigcache.cpp' object='script/libion_server_a-sigcache.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_server_a-sigcache.o `test -f 'script/sigcache.cpp' || echo '$(srcdir)/'`script/sigcache.cpp
+
+script/libion_server_a-sigcache.obj: script/sigcache.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT script/libion_server_a-sigcache.obj -MD -MP -MF script/$(DEPDIR)/libion_server_a-sigcache.Tpo -c -o script/libion_server_a-sigcache.obj `if test -f 'script/sigcache.cpp'; then $(CYGPATH_W) 'script/sigcache.cpp'; else $(CYGPATH_W) '$(srcdir)/script/sigcache.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libion_server_a-sigcache.Tpo script/$(DEPDIR)/libion_server_a-sigcache.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/sigcache.cpp' object='script/libion_server_a-sigcache.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o script/libion_server_a-sigcache.obj `if test -f 'script/sigcache.cpp'; then $(CYGPATH_W) 'script/sigcache.cpp'; else $(CYGPATH_W) '$(srcdir)/script/sigcache.cpp'; fi`
 
 libion_util_a-allocators.o: allocators.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-allocators.o -MD -MP -MF $(DEPDIR)/libion_util_a-allocators.Tpo -c -o libion_util_a-allocators.o `test -f 'allocators.cpp' || echo '$(srcdir)/'`allocators.cpp
@@ -5702,6 +5848,13 @@ qt/qt_libionqt_a-qrc_ion_locale.obj: qt/qrc_ion_locale.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qt_libionqt_a_CPPFLAGS) $(CPPFLAGS) $(qt_libionqt_a_CXXFLAGS) $(CXXFLAGS) -c -o qt/qt_libionqt_a-qrc_ion_locale.obj `if test -f 'qt/qrc_ion_locale.cpp'; then $(CYGPATH_W) 'qt/qrc_ion_locale.cpp'; else $(CYGPATH_W) '$(srcdir)/qt/qrc_ion_locale.cpp'; fi`
 
+script/libionconsensus_la-ionconsensus_dummy.lo: script/ionconsensus_dummy.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT script/libionconsensus_la-ionconsensus_dummy.lo -MD -MP -MF script/$(DEPDIR)/libionconsensus_la-ionconsensus_dummy.Tpo -c -o script/libionconsensus_la-ionconsensus_dummy.lo `test -f 'script/ionconsensus_dummy.cpp' || echo '$(srcdir)/'`script/ionconsensus_dummy.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libionconsensus_la-ionconsensus_dummy.Tpo script/$(DEPDIR)/libionconsensus_la-ionconsensus_dummy.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/ionconsensus_dummy.cpp' object='script/libionconsensus_la-ionconsensus_dummy.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o script/libionconsensus_la-ionconsensus_dummy.lo `test -f 'script/ionconsensus_dummy.cpp' || echo '$(srcdir)/'`script/ionconsensus_dummy.cpp
+
 libionconsensus_la-allocators.lo: allocators.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT libionconsensus_la-allocators.lo -MD -MP -MF $(DEPDIR)/libionconsensus_la-allocators.Tpo -c -o libionconsensus_la-allocators.lo `test -f 'allocators.cpp' || echo '$(srcdir)/'`allocators.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libionconsensus_la-allocators.Tpo $(DEPDIR)/libionconsensus_la-allocators.Plo
@@ -5772,19 +5925,33 @@ libionconsensus_la-pubkey.lo: pubkey.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o libionconsensus_la-pubkey.lo `test -f 'pubkey.cpp' || echo '$(srcdir)/'`pubkey.cpp
 
-libionconsensus_la-script.lo: script.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT libionconsensus_la-script.lo -MD -MP -MF $(DEPDIR)/libionconsensus_la-script.Tpo -c -o libionconsensus_la-script.lo `test -f 'script.cpp' || echo '$(srcdir)/'`script.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libionconsensus_la-script.Tpo $(DEPDIR)/libionconsensus_la-script.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script.cpp' object='libionconsensus_la-script.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o libionconsensus_la-script.lo `test -f 'script.cpp' || echo '$(srcdir)/'`script.cpp
-
 libionconsensus_la-utilstrencodings.lo: utilstrencodings.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT libionconsensus_la-utilstrencodings.lo -MD -MP -MF $(DEPDIR)/libionconsensus_la-utilstrencodings.Tpo -c -o libionconsensus_la-utilstrencodings.lo `test -f 'utilstrencodings.cpp' || echo '$(srcdir)/'`utilstrencodings.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libionconsensus_la-utilstrencodings.Tpo $(DEPDIR)/libionconsensus_la-utilstrencodings.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utilstrencodings.cpp' object='libionconsensus_la-utilstrencodings.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o libionconsensus_la-utilstrencodings.lo `test -f 'utilstrencodings.cpp' || echo '$(srcdir)/'`utilstrencodings.cpp
+
+script/libionconsensus_la-script.lo: script/script.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT script/libionconsensus_la-script.lo -MD -MP -MF script/$(DEPDIR)/libionconsensus_la-script.Tpo -c -o script/libionconsensus_la-script.lo `test -f 'script/script.cpp' || echo '$(srcdir)/'`script/script.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libionconsensus_la-script.Tpo script/$(DEPDIR)/libionconsensus_la-script.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/script.cpp' object='script/libionconsensus_la-script.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o script/libionconsensus_la-script.lo `test -f 'script/script.cpp' || echo '$(srcdir)/'`script/script.cpp
+
+script/libionconsensus_la-interpreter.lo: script/interpreter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT script/libionconsensus_la-interpreter.lo -MD -MP -MF script/$(DEPDIR)/libionconsensus_la-interpreter.Tpo -c -o script/libionconsensus_la-interpreter.lo `test -f 'script/interpreter.cpp' || echo '$(srcdir)/'`script/interpreter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libionconsensus_la-interpreter.Tpo script/$(DEPDIR)/libionconsensus_la-interpreter.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/interpreter.cpp' object='script/libionconsensus_la-interpreter.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o script/libionconsensus_la-interpreter.lo `test -f 'script/interpreter.cpp' || echo '$(srcdir)/'`script/interpreter.cpp
+
+script/libionconsensus_la-ionconsensus.lo: script/ionconsensus.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -MT script/libionconsensus_la-ionconsensus.lo -MD -MP -MF script/$(DEPDIR)/libionconsensus_la-ionconsensus.Tpo -c -o script/libionconsensus_la-ionconsensus.lo `test -f 'script/ionconsensus.cpp' || echo '$(srcdir)/'`script/ionconsensus.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) script/$(DEPDIR)/libionconsensus_la-ionconsensus.Tpo script/$(DEPDIR)/libionconsensus_la-ionconsensus.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='script/ionconsensus.cpp' object='script/libionconsensus_la-ionconsensus.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libionconsensus_la_CPPFLAGS) $(CPPFLAGS) $(libionconsensus_la_CXXFLAGS) $(CXXFLAGS) -c -o script/libionconsensus_la-ionconsensus.lo `test -f 'script/ionconsensus.cpp' || echo '$(srcdir)/'`script/ionconsensus.cpp
 
 ion_cli-ion-cli.o: ion-cli.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ion_cli_CPPFLAGS) $(CPPFLAGS) $(ion_cli_CXXFLAGS) $(CXXFLAGS) -MT ion_cli-ion-cli.o -MD -MP -MF $(DEPDIR)/ion_cli-ion-cli.Tpo -c -o ion_cli-ion-cli.o `test -f 'ion-cli.cpp' || echo '$(srcdir)/'`ion-cli.cpp
@@ -5917,6 +6084,7 @@ clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf crypto/.libs crypto/_libs
 	-rm -rf qt/.libs qt/_libs
+	-rm -rf script/.libs script/_libs
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
@@ -6313,6 +6481,8 @@ distclean-generic:
 	-rm -f qt/plugins/mrichtexteditor/$(am__dirstamp)
 	-rm -f qt/res/$(DEPDIR)/$(am__dirstamp)
 	-rm -f qt/res/$(am__dirstamp)
+	-rm -f script/$(DEPDIR)/$(am__dirstamp)
+	-rm -f script/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
@@ -6324,7 +6494,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-recursive
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) script/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -6370,7 +6540,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) script/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

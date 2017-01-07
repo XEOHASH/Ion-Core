@@ -6,6 +6,7 @@
 #define BITCOIN_WALLETDB_H
 
 #include "wallet/db.h"
+#include "wallet/wallet_ismine.h"
 #include "key.h"
 #include "keystore.h"
 #include "stealth.h"

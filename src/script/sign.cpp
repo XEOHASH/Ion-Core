@@ -6,7 +6,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "script/sign.h"
-#include "main.h"
+
+#include "compressor.h"
+#include "primitives/transaction.h"
 #include "key.h"
 #include "keystore.h"
 #include "uint256.h"

@@ -19,6 +19,8 @@
 #include "script/ionconsensus.h"
 #include "script/script.h"
 #include "script/sign.h"
+
+#include "compressor.h"
 #include "base58.h"
 #include "main.h"
 

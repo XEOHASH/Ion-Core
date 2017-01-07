@@ -21,7 +21,7 @@
 #include "protocol.h"
 #include "addrman.h"
 #include "hash.h"
-#include "core.h"
+#include "primitives/transaction.h"
 
 class CNode;
 class CBlockIndex;

@@ -6,7 +6,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chainparams.h"
-#include "clientversion.h"
+#if defined(HAVE_CONFIG_H)
+#include "config/ion-config.h"
+#endif
 #include "rpc/rpcclient.h"
 #include "rpc/rpcprotocol.h"
 #include "util.h"
