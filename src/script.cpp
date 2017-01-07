@@ -10,7 +10,14 @@
 using namespace std;
 using namespace boost;
 
-#include "script.h"
+
+#include "script/interpreter.h"
+#include "script/script_error.h"
+#include "script/sigcache.h"
+#include "script/standard.h"
+#include "script/ionconsensus.h"
+#include "script/script.h"
+#include "script/sign.h"
 #include "keystore.h"
 #include "bignum.h"
 #include "pubkey.h"

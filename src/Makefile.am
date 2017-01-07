@@ -160,10 +160,10 @@ LIBION_ZMQ=libion_zmq.a
 
 libion_zmq_a_CPPFLAGS = $(ION_INCLUDES) $(ZMQ_CFLAGS)
 libion_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libion_zmq_a_SOURCES = \
-  zmq/zmqabstractnotifier.cpp \
-  zmq/zmqnotificationinterface.cpp \
-  zmq/zmqpublishnotifier.cpp
+libion_zmq_a_SOURCES =
+#  zmq/zmqabstractnotifier.cpp \
+#  zmq/zmqnotificationinterface.cpp \
+#  zmq/zmqpublishnotifier.cpp
 endif
 
 
@@ -236,12 +236,12 @@ libion_util_a_SOURCES = \
   compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
-  clientversion.cpp \
   rpcprotocol.cpp \
   sync.cpp \
   util.cpp \
   utilstrencodings.cpp \
   $(ION_CORE_H)
+#  clientversion.cpp
 
 #if GLIBC_BACK_COMPAT
 #libion_util_a_SOURCES += compat/glibc_compat.cpp

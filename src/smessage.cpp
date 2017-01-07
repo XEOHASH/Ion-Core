@@ -52,7 +52,7 @@ Notes:
 
 
 #include "base58.h"
-#include "db.h"
+#include "wallet/db.h"
 #include "init.h" // pwalletMain
 #include "txdb.h"
 #include "sync.h"
@@ -60,7 +60,7 @@ Notes:
 
 #include "lz4/lz4.c"
 
-#include "xxhash/xxhash.h"
+#include "crypto/xxhash/xxhash.h"
 #include "xxhash/xxhash.c"
 
 

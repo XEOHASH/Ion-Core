@@ -4,8 +4,8 @@
 #include "clientmodel.h"
 #include "guiutil.h"
 
-#include "rpcserver.h"
-#include "rpcclient.h"
+#include "rpc/rpcserver.h"
+#include "rpc/rpcclient.h"
 
 #include <QClipboard>
 #include <QTime>

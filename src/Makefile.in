@@ -284,7 +284,6 @@ am_libion_util_a_OBJECTS = libion_util_a-allocators.$(OBJEXT) \
 	compat/libion_util_a-strnlen.$(OBJEXT) \
 	compat/libion_util_a-glibc_sanity.$(OBJEXT) \
 	compat/libion_util_a-glibcxx_sanity.$(OBJEXT) \
-	libion_util_a-clientversion.$(OBJEXT) \
 	libion_util_a-rpcprotocol.$(OBJEXT) \
 	libion_util_a-sync.$(OBJEXT) libion_util_a-util.$(OBJEXT) \
 	libion_util_a-utilstrencodings.$(OBJEXT) $(am__objects_3)
@@ -312,11 +311,7 @@ am_libion_wallet_a_OBJECTS =  \
 libion_wallet_a_OBJECTS = $(am_libion_wallet_a_OBJECTS)
 libion_zmq_a_AR = $(AR) $(ARFLAGS)
 libion_zmq_a_LIBADD =
-am__libion_zmq_a_SOURCES_DIST = zmq/zmqabstractnotifier.cpp \
-	zmq/zmqnotificationinterface.cpp zmq/zmqpublishnotifier.cpp
-@ENABLE_ZMQ_TRUE@am_libion_zmq_a_OBJECTS = zmq/libion_zmq_a-zmqabstractnotifier.$(OBJEXT) \
-@ENABLE_ZMQ_TRUE@	zmq/libion_zmq_a-zmqnotificationinterface.$(OBJEXT) \
-@ENABLE_ZMQ_TRUE@	zmq/libion_zmq_a-zmqpublishnotifier.$(OBJEXT)
+am_libion_zmq_a_OBJECTS =
 libion_zmq_a_OBJECTS = $(am_libion_zmq_a_OBJECTS)
 qt_libionqt_a_AR = $(AR) $(ARFLAGS)
 qt_libionqt_a_LIBADD =
@@ -766,7 +761,7 @@ DIST_SOURCES = $(crypto_libion_crypto_a_SOURCES) \
 	$(am__leveldb_libmemenv_a_SOURCES_DIST) \
 	$(libion_cli_a_SOURCES) $(libion_common_a_SOURCES) \
 	$(libion_server_a_SOURCES) $(libion_util_a_SOURCES) \
-	$(libion_wallet_a_SOURCES) $(am__libion_zmq_a_SOURCES_DIST) \
+	$(libion_wallet_a_SOURCES) $(libion_zmq_a_SOURCES) \
 	$(am__qt_libionqt_a_SOURCES_DIST) \
 	$(am__libionconsensus_la_SOURCES_DIST) \
 	$(am__ion_cli_SOURCES_DIST) $(am__ion_tx_SOURCES_DIST) \
@@ -1367,11 +1362,10 @@ libion_server_a_SOURCES = \
 @ENABLE_ZMQ_TRUE@LIBION_ZMQ = libion_zmq.a
 @ENABLE_ZMQ_TRUE@libion_zmq_a_CPPFLAGS = $(ION_INCLUDES) $(ZMQ_CFLAGS)
 @ENABLE_ZMQ_TRUE@libion_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-@ENABLE_ZMQ_TRUE@libion_zmq_a_SOURCES = \
-@ENABLE_ZMQ_TRUE@  zmq/zmqabstractnotifier.cpp \
-@ENABLE_ZMQ_TRUE@  zmq/zmqnotificationinterface.cpp \
-@ENABLE_ZMQ_TRUE@  zmq/zmqpublishnotifier.cpp
-
+@ENABLE_ZMQ_TRUE@libion_zmq_a_SOURCES = 
+#  zmq/zmqabstractnotifier.cpp \
+#  zmq/zmqnotificationinterface.cpp \
+#  zmq/zmqpublishnotifier.cpp
 
 # wallet: shared between iond and ion-qt, but only linked
 # when wallet enabled
@@ -1445,13 +1439,13 @@ libion_util_a_SOURCES = \
   compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
-  clientversion.cpp \
   rpcprotocol.cpp \
   sync.cpp \
   util.cpp \
   utilstrencodings.cpp \
   $(ION_CORE_H)
 
+#  clientversion.cpp
 
 #if GLIBC_BACK_COMPAT
 #libion_util_a_SOURCES += compat/glibc_compat.cpp
@@ -2238,18 +2232,6 @@ libion_wallet.a: $(libion_wallet_a_OBJECTS) $(libion_wallet_a_DEPENDENCIES) $(EX
 	$(AM_V_at)-rm -f libion_wallet.a
 	$(AM_V_AR)$(libion_wallet_a_AR) libion_wallet.a $(libion_wallet_a_OBJECTS) $(libion_wallet_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libion_wallet.a
-zmq/$(am__dirstamp):
-	@$(MKDIR_P) zmq
-	@: > zmq/$(am__dirstamp)
-zmq/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) zmq/$(DEPDIR)
-	@: > zmq/$(DEPDIR)/$(am__dirstamp)
-zmq/libion_zmq_a-zmqabstractnotifier.$(OBJEXT): zmq/$(am__dirstamp) \
-	zmq/$(DEPDIR)/$(am__dirstamp)
-zmq/libion_zmq_a-zmqnotificationinterface.$(OBJEXT):  \
-	zmq/$(am__dirstamp) zmq/$(DEPDIR)/$(am__dirstamp)
-zmq/libion_zmq_a-zmqpublishnotifier.$(OBJEXT): zmq/$(am__dirstamp) \
-	zmq/$(DEPDIR)/$(am__dirstamp)
 
 libion_zmq.a: $(libion_zmq_a_OBJECTS) $(libion_zmq_a_DEPENDENCIES) $(EXTRA_libion_zmq_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libion_zmq.a
@@ -2628,7 +2610,6 @@ mostlyclean-compile:
 	-rm -f qt/moc_plugins/mrichtexteditor/*.$(OBJEXT)
 	-rm -f qt/plugins/mrichtexteditor/*.$(OBJEXT)
 	-rm -f qt/res/*.$(OBJEXT)
-	-rm -f zmq/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -2666,7 +2647,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-txdb-leveldb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-txmempool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-allocators.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-clientversion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-rpcprotocol.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-sync.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-util.Po@am__quote@
@@ -2855,9 +2835,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@qt/$(DEPDIR)/qt_libionqt_a-walletmodeltransaction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/moc_plugins/mrichtexteditor/$(DEPDIR)/qt_libionqt_a-mrichtextedit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/plugins/mrichtexteditor/$(DEPDIR)/qt_libionqt_a-mrichtextedit.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -4017,20 +3994,6 @@ compat/libion_util_a-glibcxx_sanity.obj: compat/glibcxx_sanity.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o compat/libion_util_a-glibcxx_sanity.obj `if test -f 'compat/glibcxx_sanity.cpp'; then $(CYGPATH_W) 'compat/glibcxx_sanity.cpp'; else $(CYGPATH_W) '$(srcdir)/compat/glibcxx_sanity.cpp'; fi`
 
-libion_util_a-clientversion.o: clientversion.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-clientversion.o -MD -MP -MF $(DEPDIR)/libion_util_a-clientversion.Tpo -c -o libion_util_a-clientversion.o `test -f 'clientversion.cpp' || echo '$(srcdir)/'`clientversion.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_util_a-clientversion.Tpo $(DEPDIR)/libion_util_a-clientversion.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='clientversion.cpp' object='libion_util_a-clientversion.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_util_a-clientversion.o `test -f 'clientversion.cpp' || echo '$(srcdir)/'`clientversion.cpp
-
-libion_util_a-clientversion.obj: clientversion.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-clientversion.obj -MD -MP -MF $(DEPDIR)/libion_util_a-clientversion.Tpo -c -o libion_util_a-clientversion.obj `if test -f 'clientversion.cpp'; then $(CYGPATH_W) 'clientversion.cpp'; else $(CYGPATH_W) '$(srcdir)/clientversion.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_util_a-clientversion.Tpo $(DEPDIR)/libion_util_a-clientversion.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='clientversion.cpp' object='libion_util_a-clientversion.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_util_a-clientversion.obj `if test -f 'clientversion.cpp'; then $(CYGPATH_W) 'clientversion.cpp'; else $(CYGPATH_W) '$(srcdir)/clientversion.cpp'; fi`
-
 libion_util_a-rpcprotocol.o: rpcprotocol.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-rpcprotocol.o -MD -MP -MF $(DEPDIR)/libion_util_a-rpcprotocol.Tpo -c -o libion_util_a-rpcprotocol.o `test -f 'rpcprotocol.cpp' || echo '$(srcdir)/'`rpcprotocol.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_util_a-rpcprotocol.Tpo $(DEPDIR)/libion_util_a-rpcprotocol.Po
@@ -4310,48 +4273,6 @@ libion_wallet_a-walletdb.obj: walletdb.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='walletdb.cpp' object='libion_wallet_a-walletdb.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-walletdb.obj `if test -f 'walletdb.cpp'; then $(CYGPATH_W) 'walletdb.cpp'; else $(CYGPATH_W) '$(srcdir)/walletdb.cpp'; fi`
-
-zmq/libion_zmq_a-zmqabstractnotifier.o: zmq/zmqabstractnotifier.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -MT zmq/libion_zmq_a-zmqabstractnotifier.o -MD -MP -MF zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Tpo -c -o zmq/libion_zmq_a-zmqabstractnotifier.o `test -f 'zmq/zmqabstractnotifier.cpp' || echo '$(srcdir)/'`zmq/zmqabstractnotifier.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Tpo zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='zmq/zmqabstractnotifier.cpp' object='zmq/libion_zmq_a-zmqabstractnotifier.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -c -o zmq/libion_zmq_a-zmqabstractnotifier.o `test -f 'zmq/zmqabstractnotifier.cpp' || echo '$(srcdir)/'`zmq/zmqabstractnotifier.cpp
-
-zmq/libion_zmq_a-zmqabstractnotifier.obj: zmq/zmqabstractnotifier.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -MT zmq/libion_zmq_a-zmqabstractnotifier.obj -MD -MP -MF zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Tpo -c -o zmq/libion_zmq_a-zmqabstractnotifier.obj `if test -f 'zmq/zmqabstractnotifier.cpp'; then $(CYGPATH_W) 'zmq/zmqabstractnotifier.cpp'; else $(CYGPATH_W) '$(srcdir)/zmq/zmqabstractnotifier.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Tpo zmq/$(DEPDIR)/libion_zmq_a-zmqabstractnotifier.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='zmq/zmqabstractnotifier.cpp' object='zmq/libion_zmq_a-zmqabstractnotifier.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -c -o zmq/libion_zmq_a-zmqabstractnotifier.obj `if test -f 'zmq/zmqabstractnotifier.cpp'; then $(CYGPATH_W) 'zmq/zmqabstractnotifier.cpp'; else $(CYGPATH_W) '$(srcdir)/zmq/zmqabstractnotifier.cpp'; fi`
-
-zmq/libion_zmq_a-zmqnotificationinterface.o: zmq/zmqnotificationinterface.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -MT zmq/libion_zmq_a-zmqnotificationinterface.o -MD -MP -MF zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Tpo -c -o zmq/libion_zmq_a-zmqnotificationinterface.o `test -f 'zmq/zmqnotificationinterface.cpp' || echo '$(srcdir)/'`zmq/zmqnotificationinterface.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Tpo zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='zmq/zmqnotificationinterface.cpp' object='zmq/libion_zmq_a-zmqnotificationinterface.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -c -o zmq/libion_zmq_a-zmqnotificationinterface.o `test -f 'zmq/zmqnotificationinterface.cpp' || echo '$(srcdir)/'`zmq/zmqnotificationinterface.cpp
-
-zmq/libion_zmq_a-zmqnotificationinterface.obj: zmq/zmqnotificationinterface.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -MT zmq/libion_zmq_a-zmqnotificationinterface.obj -MD -MP -MF zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Tpo -c -o zmq/libion_zmq_a-zmqnotificationinterface.obj `if test -f 'zmq/zmqnotificationinterface.cpp'; then $(CYGPATH_W) 'zmq/zmqnotificationinterface.cpp'; else $(CYGPATH_W) '$(srcdir)/zmq/zmqnotificationinterface.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Tpo zmq/$(DEPDIR)/libion_zmq_a-zmqnotificationinterface.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='zmq/zmqnotificationinterface.cpp' object='zmq/libion_zmq_a-zmqnotificationinterface.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -c -o zmq/libion_zmq_a-zmqnotificationinterface.obj `if test -f 'zmq/zmqnotificationinterface.cpp'; then $(CYGPATH_W) 'zmq/zmqnotificationinterface.cpp'; else $(CYGPATH_W) '$(srcdir)/zmq/zmqnotificationinterface.cpp'; fi`
-
-zmq/libion_zmq_a-zmqpublishnotifier.o: zmq/zmqpublishnotifier.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -MT zmq/libion_zmq_a-zmqpublishnotifier.o -MD -MP -MF zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Tpo -c -o zmq/libion_zmq_a-zmqpublishnotifier.o `test -f 'zmq/zmqpublishnotifier.cpp' || echo '$(srcdir)/'`zmq/zmqpublishnotifier.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Tpo zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='zmq/zmqpublishnotifier.cpp' object='zmq/libion_zmq_a-zmqpublishnotifier.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -c -o zmq/libion_zmq_a-zmqpublishnotifier.o `test -f 'zmq/zmqpublishnotifier.cpp' || echo '$(srcdir)/'`zmq/zmqpublishnotifier.cpp
-
-zmq/libion_zmq_a-zmqpublishnotifier.obj: zmq/zmqpublishnotifier.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -MT zmq/libion_zmq_a-zmqpublishnotifier.obj -MD -MP -MF zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Tpo -c -o zmq/libion_zmq_a-zmqpublishnotifier.obj `if test -f 'zmq/zmqpublishnotifier.cpp'; then $(CYGPATH_W) 'zmq/zmqpublishnotifier.cpp'; else $(CYGPATH_W) '$(srcdir)/zmq/zmqpublishnotifier.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Tpo zmq/$(DEPDIR)/libion_zmq_a-zmqpublishnotifier.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='zmq/zmqpublishnotifier.cpp' object='zmq/libion_zmq_a-zmqpublishnotifier.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_zmq_a_CPPFLAGS) $(CPPFLAGS) $(libion_zmq_a_CXXFLAGS) $(CXXFLAGS) -c -o zmq/libion_zmq_a-zmqpublishnotifier.obj `if test -f 'zmq/zmqpublishnotifier.cpp'; then $(CYGPATH_W) 'zmq/zmqpublishnotifier.cpp'; else $(CYGPATH_W) '$(srcdir)/zmq/zmqpublishnotifier.cpp'; fi`
 
 qt/qt_libionqt_a-bitcoin.o: qt/bitcoin.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qt_libionqt_a_CPPFLAGS) $(CPPFLAGS) $(qt_libionqt_a_CXXFLAGS) $(CXXFLAGS) -MT qt/qt_libionqt_a-bitcoin.o -MD -MP -MF qt/$(DEPDIR)/qt_libionqt_a-bitcoin.Tpo -c -o qt/qt_libionqt_a-bitcoin.o `test -f 'qt/bitcoin.cpp' || echo '$(srcdir)/'`qt/bitcoin.cpp
@@ -6392,8 +6313,6 @@ distclean-generic:
 	-rm -f qt/plugins/mrichtexteditor/$(am__dirstamp)
 	-rm -f qt/res/$(DEPDIR)/$(am__dirstamp)
 	-rm -f qt/res/$(am__dirstamp)
-	-rm -f zmq/$(DEPDIR)/$(am__dirstamp)
-	-rm -f zmq/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
@@ -6405,7 +6324,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-recursive
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) zmq/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -6451,7 +6370,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) zmq/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

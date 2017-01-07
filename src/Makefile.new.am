@@ -241,10 +241,10 @@ LIBION_ZMQ=libion_zmq.a
 
 libion_zmq_a_CPPFLAGS = $(ION_INCLUDES) $(ZMQ_CFLAGS)
 libion_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libion_zmq_a_SOURCES = \
-  zmq/zmqabstractnotifier.cpp \
-  zmq/zmqnotificationinterface.cpp \
-  zmq/zmqpublishnotifier.cpp
+libion_zmq_a_SOURCES =
+#  zmq/zmqabstractnotifier.cpp \
+#  zmq/zmqnotificationinterface.cpp \
+#  zmq/zmqpublishnotifier.cpp
 endif
 
 

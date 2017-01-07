@@ -4,12 +4,19 @@
 #include "masternodemanager.h"
 #include "ui_masternodemanager.h"
 
-#include "walletdb.h"
-#include "wallet.h"
+#include "wallet/walletdb.h"
+#include "wallet/wallet.h"
 #include "ui_interface.h"
 #include "util.h"
 #include "key.h"
-#include "script.h"
+
+#include "script/interpreter.h"
+#include "script/script_error.h"
+#include "script/sigcache.h"
+#include "script/standard.h"
+#include "script/ionconsensus.h"
+#include "script/script.h"
+#include "script/sign.h"
 #include "init.h"
 #include "base58.h"
 #include <QMessageBox>

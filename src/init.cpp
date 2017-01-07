@@ -7,7 +7,7 @@
 #include "main.h"
 #include "chainparams.h"
 #include "txdb.h"
-#include "rpcserver.h"
+#include "rpc/rpcserver.h"
 #include "net.h"
 #include "key.h"
 #include "pubkey.h"
@@ -24,8 +24,8 @@
 #include "smessage.h"
 
 #ifdef ENABLE_WALLET
-#include "wallet.h"
-#include "walletdb.h"
+#include "wallet/wallet.h"
+#include "wallet/walletdb.h"
 #endif
 
 #include <boost/algorithm/string/predicate.hpp>

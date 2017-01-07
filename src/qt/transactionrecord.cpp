@@ -2,7 +2,7 @@
 
 #include "base58.h"
 #include "timedata.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 #include "darksend.h"
 #include "instantx.h"
 

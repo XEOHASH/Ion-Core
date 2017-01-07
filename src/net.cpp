@@ -5,13 +5,13 @@
 
 #include "init.h"
 #include "chainparams.h"
-#include "db.h"
+#include "wallet/db.h"
 #include "net.h"
 #include "main.h"
 #include "addrman.h"
 #include "ui_interface.h"
 #include "darksend.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #ifdef WIN32
 #include <string.h>
