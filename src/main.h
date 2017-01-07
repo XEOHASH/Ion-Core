@@ -14,8 +14,12 @@
 #include "scrypt.h"
 
 #include <list>
+#include <stdint.h>
 
 class CValidationState;
+class uint256;
+
+#define PERCENT_FACTOR 100
 
 #define START_MASTERNODE_PAYMENTS_TESTNET 1442690070
 #define START_MASTERNODE_PAYMENTS 1442690070
@@ -29,7 +33,6 @@ static const int64_t TARGET_SPACING = 69;
 
 #define INSTANTX_SIGNATURES_REQUIRED           20
 #define INSTANTX_SIGNATURES_TOTAL              30
-
 
 class CBlock;
 class CBlockIndex;
@@ -108,6 +111,21 @@ extern bool fReindex;
 struct COrphanBlock;
 extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
 extern bool fHaveGUI;
+
+// Delta Retargeting Algorithm
+#define BLOCK_TYPE CBlockHeader *
+#define BLOCK_TIME(block) block->nTime
+#define INDEX_TYPE CBlockIndex *
+#define INDEX_HEIGHT(block) block->nHeight
+#define INDEX_TIME(block) block->GetBlockTime()
+#define INDEX_PREV(block) block->pprev
+#define INDEX_TARGET(block) block->nBits
+#define DIFF_ABS std::abs
+#define SET_COMPACT(EXPANDED, COMPACT) EXPANDED.SetCompact(COMPACT)
+#define GET_COMPACT(EXPANDED) EXPANDED.GetCompact()
+#define BIGINT_MULTIPLY(x, y) x* y
+#define BIGINT_DIVIDE(x, y) x / y
+#define BIGINT_GREATER_THAN(x, y) (x > y)
 
 // Settings
 extern bool fUseFastIndex;
