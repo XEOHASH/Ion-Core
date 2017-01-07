@@ -1,7 +1,3 @@
-# Copyright (c) 2013-2016 The Bitcoin Core developers
-# Distributed under the MIT software license, see the accompanying
-# file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
 DIST_SUBDIRS = secp256k1 univalue
 
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS) $(HARDENED_LDFLAGS)
@@ -9,231 +5,195 @@ AM_CXXFLAGS = $(HARDENED_CXXFLAGS)
 AM_CPPFLAGS = $(HARDENED_CPPFLAGS)
 EXTRA_LIBRARIES =
 
-if EMBEDDED_UNIVALUE
-LIBUNIVALUE = univalue/libunivalue.la
+ION_CONFIG_INCLUDES=-I$(builddir)/config
+ION_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
-$(LIBUNIVALUE): $(wildcard univalue/lib/*) $(wildcard univalue/include/*)
-	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
-else
-LIBUNIVALUE = $(UNIVALUE_LIBS)
-endif
+ION_INCLUDES += -I$(srcdir)/secp256k1/include
+ION_INCLUDES += -I$(srcdir)/univalue/include
 
-BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
-BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
-
-BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
-BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
-
-LIBBITCOIN_SERVER=libbitcoin_server.a
-LIBBITCOIN_COMMON=libbitcoin_common.a
-LIBBITCOIN_CONSENSUS=libbitcoin_consensus.a
-LIBBITCOIN_CLI=libbitcoin_cli.a
-LIBBITCOIN_UTIL=libbitcoin_util.a
-LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
-LIBBITCOINQT=qt/libbitcoinqt.a
+LIBION_SERVER=libion_server.a
+LIBION_WALLET=libion_wallet.a
+LIBION_COMMON=libion_common.a
+LIBION_CLI=libion_cli.a
+LIBION_UTIL=libion_util.a
+LIBION_CRYPTO=crypto/libion_crypto.a
+LIBIONQT=qt/libionqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
-
-if ENABLE_ZMQ
-LIBBITCOIN_ZMQ=libbitcoin_zmq.a
-endif
-if BUILD_BITCOIN_LIBS
-LIBBITCOINCONSENSUS=libbitcoinconsensus.la
-endif
-if ENABLE_WALLET
-LIBBITCOIN_WALLET=libbitcoin_wallet.a
-endif
+LIBUNIVALUE=univalue/libunivalue.la
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
+
+$(LIBUNIVALUE): $(wildcard univalue/lib/*) $(wildcard univalue/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES += \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_CLI) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_ZMQ)
+  crypto/libion_crypto.a \
+  libion_util.a \
+  libion_common.a \
+  libion_server.a \
+  libion_cli.a
+if ENABLE_WALLET
+ION_INCLUDES += $(BDB_CPPFLAGS)
+EXTRA_LIBRARIES += libion_wallet.a
+endif
+if ENABLE_ZMQ
+EXTRA_LIBRARIES += libion_zmq.a
+endif
 
-lib_LTLIBRARIES = $(LIBBITCOINCONSENSUS)
+if BUILD_ION_LIBS
+lib_LTLIBRARIES = libionconsensus.la
+LIBION_CONSENSUS=libionconsensus.la
+else
+LIBION_CONSENSUS=
+endif
 
 bin_PROGRAMS =
 TESTS =
 BENCHMARKS =
 
-if BUILD_BITCOIND
-  bin_PROGRAMS += bitcoind
+if BUILD_IOND
+  bin_PROGRAMS += iond
 endif
 
-if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += bitcoin-cli bitcoin-tx
+if BUILD_ION_UTILS
+  bin_PROGRAMS += ion-cli ion-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
-# bitcoin core #
-BITCOIN_CORE_H = \
-  addrdb.h \
+# ion core #
+ION_CORE_H = \
+  activemasternode.h \
   addrman.h \
+  alert.h \
+  allocators.h \
   base58.h \
-  bloom.h \
-  blockencodings.h \
-  chain.h \
+  bignum.h \
   chainparams.h \
-  chainparamsbase.h \
   chainparamsseeds.h \
   checkpoints.h \
-  checkqueue.h \
   clientversion.h \
-  coins.h \
+  coincontrol.h \
   compat.h \
-  compat/byteswap.h \
-  compat/endian.h \
-  compat/sanity.h \
-  compressor.h \
-  consensus/consensus.h \
-  core_io.h \
-  core_memusage.h \
-  httprpc.h \
-  httpserver.h \
-  indirectmap.h \
+  core.h \
+  crypter.h \
+  darksend.h \
+  darksend-relay.h \
+  db.h \
+  ecwrapper.h \
+  hash.h \
   init.h \
+  instantx.h \
+  kernel.h \
   key.h \
   keystore.h \
-  dbwrapper.h \
-  limitedmap.h \
   main.h \
-  memusage.h \
-  merkleblock.h \
+  masternodeconfig.h \
+  masternode.h \
+  masternodeman.h \
+  masternode-payments.h \
+  masternode-pos.h \
   miner.h \
-  net.h \
-  netaddress.h \
+  mruset.h \
   netbase.h \
-  noui.h \
-  policy/fees.h \
-  policy/policy.h \
-  policy/rbf.h \
-  pow.h \
+  net.h \
+  pbkdf2.h \
   protocol.h \
-  random.h \
-  reverselock.h \
-  rpc/client.h \
-  rpc/protocol.h \
-  rpc/server.h \
-  rpc/register.h \
-  scheduler.h \
-  script/sigcache.h \
-  script/sign.h \
-  script/standard.h \
-  script/ismine.h \
-  streams.h \
-  support/allocators/secure.h \
-  support/allocators/zeroafterfree.h \
-  support/cleanse.h \
-  support/pagelocker.h \
+  pubkey.h \
+  rpcclient.h \
+  rpcprotocol.h \
+  rpcserver.h \
+  script.h \
+  scrypt.h \
+  serialize.h \
+  smessage.h \
+  spork.h \
+  stealth.h \
+  strlcpy.h \
   sync.h \
   threadsafety.h \
   timedata.h \
-  torcontrol.h \
+  tinyformat.h \
   txdb.h \
+  txdb-leveldb.h \
   txmempool.h \
   ui_interface.h \
-  undo.h \
+  uint256.h \
   util.h \
-  utilmoneystr.h \
-  utiltime.h \
-  validationinterface.h \
-  versionbits.h \
-  wallet/coincontrol.h \
-  wallet/crypter.h \
-  wallet/db.h \
-  wallet/rpcwallet.h \
-  wallet/wallet.h \
-  wallet/walletdb.h \
-  zmq/zmqabstractnotifier.h \
-  zmq/zmqconfig.h\
-  zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
-
+  utilstrencodings.h \
+  version.h \
+  walletdb.h \
+  wallet.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh $(abs_top_builddir)/src/obj/build.h \
 	  $(abs_top_srcdir)
-libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
+libion_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between bitcoind and bitcoin-qt
-libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
-libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_server_a_SOURCES = \
-  addrman.cpp \
-  addrdb.cpp \
-  bloom.cpp \
-  blockencodings.cpp \
-  chain.cpp \
+# server: shared between iond and ion-qt
+libion_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+libion_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libion_server_a_SOURCES = \
+  alert.cpp \
   checkpoints.cpp \
-  httprpc.cpp \
-  httpserver.cpp \
   init.cpp \
-  dbwrapper.cpp \
+  txdb-leveldb.cpp \
   main.cpp \
-  merkleblock.cpp \
   miner.cpp \
   net.cpp \
   noui.cpp \
-  policy/fees.cpp \
-  policy/policy.cpp \
-  pow.cpp \
-  rest.cpp \
-  rpc/blockchain.cpp \
-  rpc/mining.cpp \
-  rpc/misc.cpp \
-  rpc/net.cpp \
-  rpc/rawtransaction.cpp \
-  rpc/server.cpp \
-  script/sigcache.cpp \
-  script/ismine.cpp \
+  rpcblockchain.cpp \
+  rpcmining.cpp \
+  rpcmisc.cpp \
+  rpcnet.cpp \
+  rpcrawtransaction.cpp \
+  rpcserver.cpp \
   timedata.cpp \
-  torcontrol.cpp \
-  txdb.cpp \
   txmempool.cpp \
-  ui_interface.cpp \
-  validationinterface.cpp \
-  versionbits.cpp \
-  $(BITCOIN_CORE_H)
+  $(ION_CORE_H)
 
 if ENABLE_ZMQ
-libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
-libbitcoin_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_zmq_a_SOURCES = \
+LIBION_ZMQ=libion_zmq.a
+
+libion_zmq_a_CPPFLAGS = $(ION_INCLUDES) $(ZMQ_CFLAGS)
+libion_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libion_zmq_a_SOURCES = \
   zmq/zmqabstractnotifier.cpp \
   zmq/zmqnotificationinterface.cpp \
   zmq/zmqpublishnotifier.cpp
 endif
 
 
-# wallet: shared between bitcoind and bitcoin-qt, but only linked
+# wallet: shared between iond and ion-qt, but only linked
 # when wallet enabled
-libbitcoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_wallet_a_SOURCES = \
-  wallet/crypter.cpp \
-  wallet/db.cpp \
-  wallet/rpcdump.cpp \
-  wallet/rpcwallet.cpp \
-  wallet/wallet.cpp \
-  wallet/walletdb.cpp \
-  policy/rbf.cpp \
-  $(BITCOIN_CORE_H)
+libion_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
+libion_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libion_wallet_a_SOURCES = \
+  activemasternode.cpp \
+  darksend.cpp \
+  darksend-relay.cpp \
+  db.cpp \
+  crypter.cpp \
+  instantx.cpp \
+  masternodeconfig.cpp \
+  masternode.cpp \
+  masternodeman.cpp \
+  masternode-payments.cpp \
+  masternode-pos.cpp \
+  rpcdump.cpp \
+  rpcwallet.cpp \
+  kernel.cpp \
+  wallet.cpp \
+  walletdb.cpp \
+  $(ION_CORE_H)
 
 # crypto primitives library
-crypto_libbitcoin_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES)
-crypto_libbitcoin_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_a_SOURCES = \
-  crypto/aes.cpp \
-  crypto/aes.h \
+crypto_libion_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_CONFIG_INCLUDES) $(PIC_FLAGS)
+crypto_libion_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
+crypto_libion_crypto_a_SOURCES = \
   crypto/common.h \
   crypto/hmac_sha256.cpp \
   crypto/hmac_sha256.h \
@@ -248,188 +208,152 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha512.cpp \
   crypto/sha512.h
 
-# consensus: shared between all executables that validate any consensus rules.
-libbitcoin_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_consensus_a_SOURCES = \
-  amount.h \
-  arith_uint256.cpp \
-  arith_uint256.h \
-  consensus/merkle.cpp \
-  consensus/merkle.h \
-  consensus/params.h \
-  consensus/validation.h \
-  hash.cpp \
-  hash.h \
-  prevector.h \
-  primitives/block.cpp \
-  primitives/block.h \
-  primitives/transaction.cpp \
-  primitives/transaction.h \
-  pubkey.cpp \
-  pubkey.h \
-  script/bitcoinconsensus.cpp \
-  script/interpreter.cpp \
-  script/interpreter.h \
-  script/script.cpp \
-  script/script.h \
-  script/script_error.cpp \
-  script/script_error.h \
-  serialize.h \
-  tinyformat.h \
-  uint256.cpp \
-  uint256.h \
-  utilstrencodings.cpp \
-  utilstrencodings.h \
-  version.h
-
-# common: shared between bitcoind, and bitcoin-qt and non-server tools
-libbitcoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_common_a_SOURCES = \
-  amount.cpp \
+# common: shared between iond, and ion-qt and non-server tools
+libion_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
+libion_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libion_common_a_SOURCES = \
+  allocators.cpp \
   base58.cpp \
   chainparams.cpp \
-  coins.cpp \
-  compressor.cpp \
-  core_read.cpp \
-  core_write.cpp \
+  ecwrapper.cpp \
+  hash.cpp \
   key.cpp \
   keystore.cpp \
-  netaddress.cpp \
   netbase.cpp \
   protocol.cpp \
-  scheduler.cpp \
-  script/sign.cpp \
-  script/standard.cpp \
-  $(BITCOIN_CORE_H)
+  pubkey.cpp \
+  script.cpp \
+  spork.cpp \
+  $(ION_CORE_H)
 
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
-libbitcoin_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_util_a_SOURCES = \
-  support/pagelocker.cpp \
-  chainparamsbase.cpp \
-  clientversion.cpp \
+libion_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
+libion_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libion_util_a_SOURCES = \
+  allocators.cpp \
+  compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
-  compat/strnlen.cpp \
-  random.cpp \
-  rpc/protocol.cpp \
-  support/cleanse.cpp \
+  clientversion.cpp \
+  rpcprotocol.cpp \
   sync.cpp \
   util.cpp \
-  utilmoneystr.cpp \
   utilstrencodings.cpp \
-  utiltime.cpp \
-  $(BITCOIN_CORE_H)
+  $(ION_CORE_H)
 
-if GLIBC_BACK_COMPAT
-libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
-endif
+#if GLIBC_BACK_COMPAT
+#libion_util_a_SOURCES += compat/glibc_compat.cpp
+#endif
 
-# cli: shared between bitcoin-cli and bitcoin-qt
-libbitcoin_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_cli_a_SOURCES = \
-  rpc/client.cpp \
-  $(BITCOIN_CORE_H)
+# cli: shared between ion-cli and ion-qt
+libion_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
+libion_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libion_cli_a_SOURCES = \
+  rpcclient.cpp \
+  $(ION_CORE_H)
 
-nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
+nodist_libion_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# bitcoind binary #
-bitcoind_SOURCES = bitcoind.cpp
-bitcoind_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-bitcoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# iond binary #
+iond_SOURCES = bitcoind.cpp
+iond_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
+iond_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+iond_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-bitcoind_SOURCES += bitcoind-res.rc
+iond_SOURCES += iond-res.rc
 endif
 
-bitcoind_LDADD = \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_COMMON) \
+iond_LDADD = \
+  $(LIBION_SERVER) \
+  $(LIBION_COMMON) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_ZMQ) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
+  $(LIBION_UTIL) \
+  $(LIBION_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-bitcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
-
-# bitcoin-cli binary #
-bitcoin_cli_SOURCES = bitcoin-cli.cpp
-bitcoin_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-bitcoin_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-
-if TARGET_WINDOWS
-bitcoin_cli_SOURCES += bitcoin-cli-res.rc
+if ENABLE_ZMQ
+iond_LDADD += $(LIBION_ZMQ) $(ZMQ_LIBS)
 endif
 
-bitcoin_cli_LDADD = \
-  $(LIBBITCOIN_CLI) \
-  $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO)
+if ENABLE_WALLET
+iond_LDADD += libion_wallet.a
+endif
 
-bitcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+iond_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+
+# ion-cli binary #
+ion_cli_SOURCES = ion-cli.cpp
+ion_cli_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES) $(EVENT_CFLAGS)
+ion_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+ion_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+
+if TARGET_WINDOWS
+ion_cli_SOURCES += ion-cli-res.rc
+endif
+
+ion_cli_LDADD = \
+  $(LIBION_CLI) \
+  $(LIBUNIVALUE) \
+  $(LIBION_UTIL)
+ion_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# bitcoin-tx binary #
-bitcoin_tx_SOURCES = bitcoin-tx.cpp
-bitcoin_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-bitcoin_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# ion-tx binary #
+ion_tx_SOURCES = ion-tx.cpp
+ion_tx_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
+ion_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+ion_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-bitcoin_tx_SOURCES += bitcoin-tx-res.rc
+ion_tx_SOURCES += ion-tx-res.rc
 endif
 
-bitcoin_tx_LDADD = \
+ion_tx_LDADD = \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
+  $(LIBION_COMMON) \
+  $(LIBION_UTIL) \
+  $(LIBION_CRYPTO) \
   $(LIBSECP256K1)
 
-bitcoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+ion_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
-# bitcoinconsensus library #
-if BUILD_BITCOIN_LIBS
-include_HEADERS = script/bitcoinconsensus.h
-libbitcoinconsensus_la_SOURCES = $(crypto_libbitcoin_crypto_a_SOURCES) $(libbitcoin_consensus_a_SOURCES)
+# ionconsensus library #
+if BUILD_ION_LIBS
+include_HEADERS = script/ionconsensus.h
+libionconsensus_la_SOURCES = \
+  allocators.cpp \
+  crypto/hmac_sha256.cpp \
+  crypto/hmac_sha512.cpp \
+  crypto/ripemd160.cpp \
+  crypto/sha1.cpp \
+  crypto/sha256.cpp \
+  crypto/sha512.cpp \
+  ecwrapper.cpp \
+  hash.cpp \
+  pubkey.cpp \
+  script.cpp \
+  utilstrencodings.cpp
 
-if GLIBC_BACK_COMPAT
-  libbitcoinconsensus_la_SOURCES += compat/glibc_compat.cpp
-endif
+#if GLIBC_BACK_COMPAT
+#  libionconsensus_la_SOURCES += compat/glibc_compat.cpp
+#endif
 
-libbitcoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libbitcoinconsensus_la_LIBADD = $(LIBSECP256K1)
-libbitcoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
-libbitcoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libionconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
+libionconsensus_la_LIBADD = $(LIBSECP256K1)
+libionconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_ION_INTERNAL
+libionconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 endif
 #
 
-CTAES_DIST =  crypto/ctaes/bench.c
-CTAES_DIST += crypto/ctaes/ctaes.c
-CTAES_DIST += crypto/ctaes/ctaes.h
-CTAES_DIST += crypto/ctaes/README.md
-CTAES_DIST += crypto/ctaes/test.c
-
-CLEANFILES = $(EXTRA_LIBRARIES)
-
+CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a
 CLEANFILES += *.gcda *.gcno
 CLEANFILES += compat/*.gcda compat/*.gcno
 CLEANFILES += consensus/*.gcda consensus/*.gcno
@@ -445,19 +369,18 @@ CLEANFILES += zmq/*.gcda zmq/*.gcno
 
 DISTCLEANFILES = obj/build.h
 
-EXTRA_DIST = $(CTAES_DIST)
+EXTRA_DIST = leveldb
 
 clean-local:
+	-$(MAKE) -C leveldb clean
 	-$(MAKE) -C secp256k1 clean
 	-$(MAKE) -C univalue clean
 	-rm -f leveldb/*/*.gcda leveldb/*/*.gcno leveldb/helpers/memenv/*.gcda leveldb/helpers/memenv/*.gcno
 	-rm -f config.h
-	-rm -rf test/__pycache__
 
 .rc.o:
 	@test -f $(WINDRES)
-	## FIXME: How to get the appropriate modulename_CPPFLAGS in here?
-	$(AM_V_GEN) $(WINDRES) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -DWINDRES_PREPROC -i $< -o $@
+	$(AM_V_GEN) $(WINDRES) -DWINDRES_PREPROC -i $< -o $@
 
 .mm.o:
 	$(AM_V_CXX) $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -477,7 +400,7 @@ endif
 
 %.pb.cc %.pb.h: %.proto
 	@test -f $(PROTOC)
-	$(AM_V_GEN) $(PROTOC) --cpp_out=$(@D) --proto_path=$(<D) $<
+	$(AM_V_GEN) $(PROTOC) --cpp_out=$(@D) --proto_path=$(abspath $(<D) $<)
 
 if EMBEDDED_LEVELDB
 include Makefile.leveldb.include
