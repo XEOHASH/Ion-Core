@@ -349,7 +349,7 @@ public:
             ::fclose(file);
             file = NULL;
         }
-    }
+    }  
 
     /** Get wrapped FILE* with transfer of ownership.
      * @note This will invalidate the CAutoFile object, and makes it the responsibility of the caller
@@ -362,6 +362,11 @@ public:
     FILE** operator&()          { return &file; }
     FILE* operator=(FILE* pnew) { return file = pnew; }
     bool operator!()            { return (file == NULL); }
+    
+    bool fail() const            { return state & (std::ios::badbit | std::ios::failbit); }
+    bool good() const            { return state == 0; }
+    void clear(short n = 0)      { state = n; }
+    short exceptions()           { return exceptmask; }
 
     /** Get wrapped FILE* without transfer of ownership.
      * @note Ownership of the FILE* will remain with this class. Use this only if the scope of the

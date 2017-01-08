@@ -82,6 +82,7 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    
         // serialized format:
         // * version byte (currently 0)
         // * masternodes vector
@@ -95,6 +96,7 @@ public:
                 READWRITE(mWeAskedForMasternodeListEntry);
                 READWRITE(nDsqCount);
         }
+    
     }
 
     CMasternodeMan();

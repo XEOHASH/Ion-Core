@@ -454,7 +454,6 @@ public:
         return *this;
     }
 
-
     bool GetOp(iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet)
     {
          // Wrapper so it can be called with either iterator or const_iterator
@@ -594,6 +593,8 @@ public:
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
     bool IsPayToScriptHash() const;
+
+//    void SetDestination(const CTxDestination& address);
 
     /** Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical). */
     bool IsPushOnly() const;

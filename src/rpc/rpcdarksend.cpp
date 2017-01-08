@@ -802,22 +802,6 @@ Value masternodelist(const Array& params, bool fHelp)
             if (strMode == "activeseconds") {
                 if(strFilter !="" && strVin.find(strFilter) == string::npos) continue;
                 obj.push_back(Pair(strVin,       (int64_t)(mn.lastTimeSeen - mn.sigTime)));
-            } else if (strMode == "donation") {
-                CTxDestination address1;
-                ExtractDestination(mn.donationAddress, address1);
-                CIoncoinAddress address2(address1);
-
-                if(strFilter !="" && address2.ToString().find(strFilter) == string::npos &&
-                    strVin.find(strFilter) == string::npos) continue;
-
-                std::string strOut = "";
-
-                if(mn.donationPercentage != 0){
-                    strOut = address2.ToString().c_str();
-                    strOut += ":";
-                    strOut += boost::lexical_cast<std::string>(mn.donationPercentage);
-                }
-                obj.push_back(Pair(strVin,       strOut.c_str()));
             } else if (strMode == "full") {
                 CScript pubkey;
                 pubkey.SetDestination(mn.pubkey.GetID());

@@ -10,6 +10,7 @@
 
 #include "script/interpreter.h"
 #include "uint256.h"
+#include "stealth.h"
 
 #include <boost/variant.hpp>
 
@@ -81,7 +82,7 @@ public:
  *  * CScriptID: TX_SCRIPTHASH destination
  *  A CTxDestination is the internal data type encoded in a CIoncoinAddress
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID, CStealthAddress> CTxDestination;
 
 const char* GetTxnOutputType(txnouttype t);
 

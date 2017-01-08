@@ -42,10 +42,12 @@ CTxMemPool mempool;
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 
-CBigNum bnProofOfStakeLimit(~uint256(0) >> 20);
+uint256 bnProofOfStakeLimit(~uint256(0) >> 20);
 
 unsigned int nStakeMinAge = 24 * 60 * 60; // 24 hours
 unsigned int nModifierInterval = 2 * 60; // time to elapse before new modifier is computed
+
+static const int64_t nMaxClockDrift = 15 * 60;
 
 int nCoinbaseMaturity = 10;
 int nStakeMinConfirmations = 30;
@@ -625,15 +627,14 @@ bool AreInputsStandard(const CTransaction& tx, const MapPrevTx& mapInputs)
         int nArgsExpected = ScriptSigArgsExpected(whichType, vSolutions);
         if (nArgsExpected < 0)
             return false;
-
-        // Transactions with extra stuff in their scriptSigs are
+		// Transactions with extra stuff in their scriptSigs are
         // non-standard. Note that this EvalScript() call will
         // be quick, because if there are any operations
         // beside "push data" in the scriptSig
         // IsStandard() will have already returned false
         // and this method isn't called.
         vector<vector<unsigned char> > stack;
-        if (!EvalScript(stack, vin[i].scriptSig, tx, i, SCRIPT_VERIFY_NONE, 0))
+        if (!EvalScript(stack, tx.vin[i].scriptSig, false, BaseSignatureChecker()))
             return false;
 
         if (whichType == TX_SCRIPTHASH)
@@ -776,7 +777,7 @@ bool CheckTransaction(const CTransaction& tx)
         return tx.DoS(100, error("CheckTransaction() : size limits failed"));
 
     //  Checks tx time in order to catch time drifting attacks
-    if (tx.nTime > GetAdjustedTime() + tx.nMaxClockDrift)
+    if (tx.nTime > GetAdjustedTime() + nMaxClockDrift)
         return tx.DoS(10, error("CTransaction::CheckTransaction() : timestamp is too far into the future"));
 
     // Check for negative or overflow output values
@@ -1483,7 +1484,7 @@ void static PruneOrphanBlocks()
     mapOrphanBlocks.erase(hash);
 }
 
-static CBigNum GetProofOfStakeLimit(int nHeight)
+static uint256 GetProofOfStakeLimit(int nHeight)
 {
     return bnProofOfStakeLimit;
 }
@@ -1549,7 +1550,7 @@ const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfSta
 
 static int nTargetSpacing = 60;
 static int nTargetTimespan = 60;
-
+/*
 unsigned int DeltaRetargetingAlgorithm(const INDEX_TYPE pindexLast, const BLOCK_TYPE block, 
 										 int nTargetSpacing, unsigned int nPowLimit, unsigned int nFirstDeltaBlock) {
       
@@ -1716,17 +1717,54 @@ unsigned int DeltaRetargetingAlgorithm(const INDEX_TYPE pindexLast, const BLOCK_
 
       return GET_COMPACT(bnNew);
 }
+*/
 
 unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfStake)
 {
-    unsigned int bnTargetLimit = fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight).GetCompact() : Params().ProofOfWorkLimit().GetCompact();
 
-	return DeltaRetargetingAlgorithm(pindexLast, pindexBest, nTargetSpacing, bnTargetLimit, 0); // ?
+    uint256 bnTargetLimit = fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight) : Params().ProofOfWorkLimit();
+
+    if (pindexLast == NULL)
+        return bnTargetLimit.GetCompact(); // genesis block
+
+    const CBlockIndex* pindexPrev = GetLastBlockIndex(pindexLast, fProofOfStake);
+    if (pindexPrev->pprev == NULL)
+        return bnTargetLimit.GetCompact(); // first block
+    const CBlockIndex* pindexPrevPrev = GetLastBlockIndex(pindexPrev->pprev, fProofOfStake);
+    if (pindexPrevPrev->pprev == NULL)
+        return bnTargetLimit.GetCompact(); // second block
+
+    int64_t nActualSpacing = pindexPrev->GetBlockTime() - pindexPrevPrev->GetBlockTime();
+    if (nActualSpacing < 0)
+        nActualSpacing = nTargetSpacing;
+
+    if (nActualSpacing > nTargetSpacing * 10)
+        nActualSpacing = nTargetSpacing * 10;
+
+    // ppcoin: target change every block
+    // ppcoin: retarget with exponential moving toward target spacing
+    uint256 bnNew;
+    bnNew.SetCompact(pindexPrev->nBits);
+    int64_t nInterval = nTargetTimespan / nTargetSpacing;
+    bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
+    bnNew /= ((nInterval + 1) * nTargetSpacing);
+
+    if (bnNew <= 0 || bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
+
+    return bnNew.GetCompact();
 }
 
+/*unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfStake)
+{
+    unsigned int bnTargetLimit = fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight).GetCompact() : Params().ProofOfWorkLimit().GetCompact();
+
+	//return DeltaRetargetingAlgorithm(pindexLast, pindexBest, nTargetSpacing, bnTargetLimit, 0); // ?
+}
+*/
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 {
-    CBigNum bnTarget;
+    uint256 bnTarget;
     bnTarget.SetCompact(nBits);
 
     // Check range
@@ -1734,7 +1772,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
         return error("CheckProofOfWork() : nBits below minimum work");
 
     // Check proof of work matches claimed amount
-    if (hash > bnTarget.getuint256())
+    if (hash > bnTarget)
         return error("CheckProofOfWork() : hash doesn't match nBits");
 
     return true;
@@ -1761,7 +1799,7 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
     if (pindexNew->nChainTrust > nBestInvalidTrust)
     {
         nBestInvalidTrust = pindexNew->nChainTrust;
-        CTxDB().WriteBestInvalidTrust(CBigNum(nBestInvalidTrust));
+        CTxDB().WriteBestInvalidTrust(nBestInvalidTrust);
     }
 
     uint256 nBestInvalidBlockTrust = pindexNew->nChainTrust - pindexNew->pprev->nChainTrust;
@@ -1769,11 +1807,11 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
 
     LogPrintf("InvalidChainFound: invalid block=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
       pindexNew->GetBlockHash().ToString(), pindexNew->nHeight,
-      CBigNum(pindexNew->nChainTrust).ToString(), nBestInvalidBlockTrust.Get64(),
+      pindexNew->nChainTrust.ToString(), nBestInvalidBlockTrust.Get64(),
       DateTimeStrFormat("%x %H:%M:%S", pindexNew->GetBlockTime()));
     LogPrintf("InvalidChainFound:  current best=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
       hashBestChain.ToString(), nBestHeight,
-      CBigNum(pindexBest->nChainTrust).ToString(),
+      pindexBest->nChainTrust.ToString(),
       nBestBlockTrust.Get64(),
       DateTimeStrFormat("%x %H:%M:%S", pindexBest->GetBlockTime()));
 }
@@ -1888,7 +1926,7 @@ bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const map<uint256, CTxInde
     // Make sure all prevout.n indexes are valid:
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        const COutPoint prevout = vin[i].prevout;
+        const COutPoint prevout = tx.vin[i].prevout;
         assert(inputsRet.count(prevout.hash) != 0);
         const CTxIndex& txindex = inputsRet[prevout.hash].first;
         const CTransaction& txPrev = inputsRet[prevout.hash].second;
@@ -1994,7 +2032,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
                 if (!(fBlock && !IsInitialBlockDownload()))
                 {
                     // Verify signature
-                    if (!tx.VerifySignature(txPrev, tx, i, flags, 0))
+                    if (!VerifySignature(txPrev, tx, i, flags, 0))
                     {
                         if (flags & STANDARD_NOT_MANDATORY_VERIFY_FLAGS) {
                             // Check whether the failure was caused by a
@@ -2034,7 +2072,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
                 return tx.DoS(100, error("ConnectInputs() : %s value in < value out", tx.GetHash().ToString()));
 
             // Tally transaction fees
-            int64_t nTxFee = nValueIn - GetValueOut();
+            int64_t nTxFee = nValueIn - tx.GetValueOut();
             if (nTxFee < 0)
                 return tx.DoS(100, error("ConnectInputs() : %s nTxFee < 0", tx.GetHash().ToString()));
 
@@ -2564,7 +2602,7 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
 
     LogPrintf("SetBestChain: new best=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
       hashBestChain.ToString(), nBestHeight,
-      CBigNum(nBestChainTrust).ToString(),
+      nBestChainTrust.ToString(),
       nBestBlockTrust.Get64(),
       DateTimeStrFormat("%x %H:%M:%S", pindexBest->GetBlockTime()));
 
@@ -2606,7 +2644,7 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
 // age (trust score) of competing branches.
 bool CTransaction::GetCoinAge(CTxDB& txdb, const CBlockIndex* pindexPrev, uint64_t& nCoinAge) const
 {
-    CBigNum bnCentSecond = 0;  // coin age in the unit of cent-seconds
+    uint256 bnCentSecond = 0;  // coin age in the unit of cent-seconds
     nCoinAge = 0;
     int nStakeMinConfirmations = 1440;
 
@@ -2632,14 +2670,14 @@ bool CTransaction::GetCoinAge(CTxDB& txdb, const CBlockIndex* pindexPrev, uint64
         }
 
         int64_t nValueIn = txPrev.vout[txin.prevout.n].nValue;
-        bnCentSecond += CBigNum(nValueIn) * (nTime-txPrev.nTime) / CENT;
+        bnCentSecond += (nValueIn) * (nTime-txPrev.nTime) / CENT;
 
         LogPrint("coinage", "coin age nValueIn=%d nTimeDiff=%d bnCentSecond=%s\n", nValueIn, nTime - txPrev.nTime, bnCentSecond.ToString());
     }
 
-    CBigNum bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
+    uint256 bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
     LogPrint("coinage", "coin age bnCoinDay=%s\n", bnCoinDay.ToString());
-    nCoinAge = bnCoinDay.getuint64();
+    nCoinAge = bnCoinDay.GetLow64();
     return true;
 }
 
@@ -2990,13 +3028,13 @@ bool CBlock::AcceptBlock()
 
 uint256 CBlockIndex::GetBlockTrust() const
 {
-    CBigNum bnTarget;
+    uint256 bnTarget;
     bnTarget.SetCompact(nBits);
 
     if (bnTarget <= 0)
         return 0;
 
-    return ((CBigNum(1)<<256) / (bnTarget+1)).getuint256();
+    return ((uint256(1)<<256) / (bnTarget+1));
 }
 
 void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd)
@@ -3056,12 +3094,6 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
                 Misbehaving(pfrom->GetId(), 1);
             return error("ProcessBlock() : block with timestamp before last checkpoint");
         }
-    }
-
-    // Block signature can be malleated in such a way that it increases block size up to maximum allowed by protocol
-    // For now we just strip garbage from newly received blocks
-    if (!IsCanonicalBlockSignature(pblock)) {
-        return error("ProcessBlock(): bad block signature encoding");
     }
 
     // Preliminary checks

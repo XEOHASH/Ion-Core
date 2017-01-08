@@ -12,6 +12,7 @@
 #include <sys/resource.h>
 #endif
 
+#include "amount.h"
 #include "serialize.h"
 #include "tinyformat.h"
 
@@ -37,11 +38,6 @@
 #include <stdint.h>
 
 class uint256;
-
-static const int64_t COIN = 100000000;
-static const int64_t CENT = 1000000;
-
-typedef int64_t CAmount;
 
 /* Format characters for (s)size_t and ptrdiff_t */
 #if defined(_MSC_VER) || defined(__MSVCRT__)

@@ -16,7 +16,7 @@ struct CDiskTxPos;
 class CTxIndex;
 class CTxDB;
 class CBlockIndex;
-//class CTransaction;
+class CScript;
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint

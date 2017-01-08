@@ -109,8 +109,6 @@ public:
     	return (nErrorType > 0 && nErrorType <= SCANNING_ERROR_MAX);
     }
 
-    ADD_SERIALIZE_METHODS;
-
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(vinMasternodeA);
@@ -119,7 +117,7 @@ public:
         READWRITE(nExpiration);
         READWRITE(nBlockHeight);
         READWRITE(vchMasterNodeSignature);
-    }
+    )
 };
 
 

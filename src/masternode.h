@@ -152,13 +152,8 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-        // serialized format:
-        // * version byte (currently 0)
-        // * all fields (?)
-        {
                 LOCK(cs);
-                unsigned char nVersion = 0;
-                READWRITE(nVersion);
+
                 READWRITE(vin);
                 READWRITE(addr);
                 READWRITE(pubkey);
@@ -181,8 +176,7 @@ public:
                 READWRITE(nScanningErrorCount);
                 READWRITE(nLastScanningErrorBlockHeight);
                 READWRITE(nLastPaid);
-        }
-    }
+	}
 
     int64_t SecondsSincePayment()
     {
