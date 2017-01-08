@@ -413,7 +413,7 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 //
 // C(Mutable)Transaction and CTxIndex
 //
-    bool CTransaction::ReadFromDisk(CDiskTxPos pos, FILE** pfileRet=NULL)
+    bool CTransaction::ReadFromDisk(CDiskTxPos pos, FILE** pfileRet)
     {
         CAutoFile filein = CAutoFile(OpenBlockFile(pos.nFile, 0, pfileRet ? "rb+" : "rb"), SER_DISK, CLIENT_VERSION);
         if (!filein)
@@ -442,7 +442,14 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 
 bool CTransaction::ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet)
 {
-    SetNull();
+    { // TODO: SetNull()
+        nVersion = CURRENT_VERSION;
+        nTime = GetAdjustedTime();
+        vin.clear();
+        vout.clear();
+        nLockTime = 0;
+        nDoS = 0;  // Denial-of-service prevention
+    }
     if (!txdb.ReadTxIndex(hash, txindexRet))
         return false;
     if (!ReadFromDisk(txindexRet.pos))
@@ -456,7 +463,14 @@ bool CTransaction::ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txinde
         return false;
     if (prevout.n >= vout.size())
     {
-        SetNull();
+		{ // TODO: SetNull()
+			nVersion = CURRENT_VERSION;
+			nTime = GetAdjustedTime();
+			vin.clear();
+			vout.clear();
+			nLockTime = 0;
+			nDoS = 0;  // Denial-of-service prevention
+		}
         return false;
     }
     return true;
@@ -536,10 +550,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             reason = "scriptsig-not-pushonly";
             return false;
         }
-        if (!txin.scriptSig.HasCanonicalPushes()) {
-            reason = "scriptsig-non-canonical-push";
-            return false;
-        }
     }
 
     unsigned int nDataOut = 0;
@@ -556,10 +566,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             nDataOut++;
         } else if (txout.nValue == 0) {
             reason = "dust";
-            return false;
-        }
-        if (!txout.scriptPubKey.HasCanonicalPushes()) {
-            reason = "scriptpubkey-non-canonical-push";
             return false;
         }
     }
@@ -627,7 +633,7 @@ bool AreInputsStandard(const CTransaction& tx, const MapPrevTx& mapInputs)
         // IsStandard() will have already returned false
         // and this method isn't called.
         vector<vector<unsigned char> > stack;
-        if (!EvalScript(stack, tx.vin[i].scriptSig, tx, i, SCRIPT_VERIFY_NONE, 0))
+        if (!EvalScript(stack, vin[i].scriptSig, tx, i, SCRIPT_VERIFY_NONE, 0))
             return false;
 
         if (whichType == TX_SCRIPTHASH)
@@ -757,40 +763,36 @@ double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSiz
     return dPriorityInputs / nTxSize;
 }
 
-bool CheckTransaction(const CTransaction& tx) const
+bool CheckTransaction(const CTransaction& tx)
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
-        return DoS(10, error("CheckTransaction() : vin empty"),
-                         REJECT_INVALID, "bad-txns-vin-empty");
+        return tx.DoS(10, error("CheckTransaction() : vin empty"));
+                                
     if (tx.vout.empty())
-        return DoS(10, error("CheckTransaction() : vout empty"),
-                         REJECT_INVALID, "bad-txns-vout-empty");
+        return tx.DoS(10, error("CheckTransaction() : vout empty"));
     // Size limits
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
-        return DoS(100, error("CheckTransaction() : size limits failed"),
-                         REJECT_INVALID, "bad-txns-oversize");
+        return tx.DoS(100, error("CheckTransaction() : size limits failed"));
 
     //  Checks tx time in order to catch time drifting attacks
-    if (tx.nTime > GetAdjustedTime() + nMaxClockDrift)
-        return DoS(10, error("CTransaction::CheckTransaction() : timestamp is too far into the future"));
+    if (tx.nTime > GetAdjustedTime() + tx.nMaxClockDrift)
+        return tx.DoS(10, error("CTransaction::CheckTransaction() : timestamp is too far into the future"));
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
     BOOST_FOREACH(const CTxOut& txout, tx.vout)
     {
         if (txout.IsEmpty() && (!tx.IsCoinBase()) && (!tx.IsCoinStake()))
-            return DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
+            return tx.DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
         // ppcoin: enforce minimum output amount
         if (txout.nValue < 0)
-            return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue negative"));
+            return tx.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue negative"));
         if (txout.nValue > MAX_MONEY)
-            return DoS(100, error("CheckTransaction() : txout.nValue too high"),
-                             REJECT_INVALID, "bad-txns-vout-toolarge");
+            return tx.DoS(100, error("CheckTransaction() : txout.nValue too high"));
         nValueOut += txout.nValue;
         if (!MoneyRange(nValueOut))
-            return DoS(100, error("CheckTransaction() : txout total out of range"),
-                             REJECT_INVALID, "bad-txns-txouttotal-toolarge");
+            return tx.DoS(100, error("CheckTransaction() : txout total out of range"));
     }
 
     // Check for duplicate inputs
@@ -798,23 +800,20 @@ bool CheckTransaction(const CTransaction& tx) const
     BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         if (vInOutPoints.count(txin.prevout))
-            return DoS(100, error("CheckTransaction() : duplicate inputs"),
-                             REJECT_INVALID, "bad-txns-inputs-duplicate");
+            return tx.DoS(100, error("CheckTransaction() : duplicate inputs"));
         vInOutPoints.insert(txin.prevout);
     }
 
     if (tx.IsCoinBase())
     {
         if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
-            return DoS(100, error("CheckTransaction() : coinbase script size"),
-                             REJECT_INVALID, "bad-cb-length");
+            return tx.DoS(100, error("CheckTransaction() : coinbase script size"));
     }
 	else
     {
         BOOST_FOREACH(const CTxIn& txin, tx.vin)
             if (txin.prevout.IsNull())
-                return DoS(10, error("CheckTransaction() : prevout is null"),
-                                 REJECT_INVALID, "bad-txns-prevout-null");
+                return tx.DoS(10, error("CheckTransaction() : prevout is null"));
     }
 
     return true;
@@ -1866,7 +1865,7 @@ bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const map<uint256, CTxInde
             fFound = txdb.ReadTxIndex(prevout.hash, txindex);
         }
         if (!fFound && (fBlock || fMiner))
-            return fMiner ? false : error("FetchInputs() : %s prev tx %s index entry not found", GetHash().ToString(),  prevout.hash.ToString());
+            return fMiner ? false : error("FetchInputs() : %s prev tx %s index entry not found", tx.GetHash().ToString(),  prevout.hash.ToString());
 
         // Read txPrev
         CTransaction& txPrev = inputsRet[prevout.hash].second;
@@ -1874,7 +1873,7 @@ bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const map<uint256, CTxInde
         {
             // Get prev tx from single transactions in memory
             if (!mempool.lookup(prevout.hash, txPrev))
-                return error("FetchInputs() : %s mempool Tx prev not found %s", GetHash().ToString(),  prevout.hash.ToString());
+                return error("FetchInputs() : %s mempool Tx prev not found %s", tx.GetHash().ToString(),  prevout.hash.ToString());
             if (!fFound)
                 txindex.vSpent.resize(txPrev.vout.size());
         }
@@ -1882,12 +1881,12 @@ bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const map<uint256, CTxInde
         {
             // Get prev tx from disk
             if (!txPrev.ReadFromDisk(txindex.pos))
-                return error("FetchInputs() : %s ReadFromDisk prev tx %s failed", GetHash().ToString(),  prevout.hash.ToString());
+                return error("FetchInputs() : %s ReadFromDisk prev tx %s failed", tx.GetHash().ToString(),  prevout.hash.ToString());
         }
     }
 
     // Make sure all prevout.n indexes are valid:
-    for (unsigned int i = 0; i < vin.size(); i++)
+    for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
         const COutPoint prevout = vin[i].prevout;
         assert(inputsRet.count(prevout.hash) != 0);
@@ -1898,7 +1897,7 @@ bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const map<uint256, CTxInde
             // Revisit this if/when transaction replacement is implemented and allows
             // adding inputs:
             fInvalid = true;
-            return DoS(100, error("FetchInputs() : %s prevout.n out of range %d %u %u prev tx %s\n%s", GetHash().ToString(), prevout.n, txPrev.vout.size(), txindex.vSpent.size(), prevout.hash.ToString(), txPrev.ToString()));
+            return tx.DoS(100, error("FetchInputs() : %s prevout.n out of range %d %u %u prev tx %s\n%s", tx.GetHash().ToString(), prevout.n, txPrev.vout.size(), txindex.vSpent.size(), prevout.hash.ToString(), txPrev.ToString()));
         }
     }
 
@@ -1951,7 +1950,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
             CTransaction& txPrev = inputs[prevout.hash].second;
 
             if (prevout.n >= txPrev.vout.size() || prevout.n >= txindex.vSpent.size())
-                return DoS(100, error("ConnectInputs() : %s prevout.n out of range %d %u %u prev tx %s\n%s", GetHash().ToString(), prevout.n, txPrev.vout.size(), txindex.vSpent.size(), prevout.hash.ToString(), txPrev.ToString()));
+                return tx.DoS(100, error("ConnectInputs() : %s prevout.n out of range %d %u %u prev tx %s\n%s", tx.GetHash().ToString(), prevout.n, txPrev.vout.size(), txindex.vSpent.size(), prevout.hash.ToString(), txPrev.ToString()));
 
             // If prev is coinbase or coinstake, check that it's matured
             if (txPrev.IsCoinBase() || txPrev.IsCoinStake())
@@ -1962,13 +1961,13 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
                 }
             }
             // ppcoin: check transaction timestamp
-            if (txPrev.nTime > nTime)
-                return DoS(100, error("ConnectInputs() : transaction timestamp earlier than input transaction"));
+            if (txPrev.nTime > tx.nTime)
+                return tx.DoS(100, error("ConnectInputs() : transaction timestamp earlier than input transaction"));
 
             // Check for negative or overflow input values
             nValueIn += txPrev.vout[prevout.n].nValue;
             if (!MoneyRange(txPrev.vout[prevout.n].nValue) || !MoneyRange(nValueIn))
-                return DoS(100, error("ConnectInputs() : txin values out of range"));
+                return tx.DoS(100, error("ConnectInputs() : txin values out of range"));
 
         }
         // The first loop above does all the inexpensive checks.
@@ -1985,7 +1984,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
             // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
             // for an attacker to attempt to split the network.
             if (!txindex.vSpent[prevout.n].IsNull())
-                return fMiner ? false : error("ConnectInputs() : %s prev tx already used at %s", GetHash().ToString(), txindex.vSpent[prevout.n].ToString());
+                return fMiner ? false : error("ConnectInputs() : %s prev tx already used at %s", tx.GetHash().ToString(), txindex.vSpent[prevout.n].ToString());
 
             if(fValidateSig)
             {
@@ -1995,7 +1994,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
                 if (!(fBlock && !IsInitialBlockDownload()))
                 {
                     // Verify signature
-                    if (!VerifySignature(txPrev, tx, i, flags, 0))
+                    if (!tx.VerifySignature(txPrev, tx, i, flags, 0))
                     {
                         if (flags & STANDARD_NOT_MANDATORY_VERIFY_FLAGS) {
                             // Check whether the failure was caused by a
@@ -2005,7 +2004,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
                             // avoid splitting the network between upgraded and
                             // non-upgraded nodes.
                             if (VerifySignature(txPrev, tx, i, flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, 0))
-                                return error("ConnectInputs() : %s non-mandatory VerifySignature failed", GetHash().ToString());
+                                return error("ConnectInputs() : %s non-mandatory VerifySignature failed", tx.GetHash().ToString());
                         }
                         // Failures of other flags indicate a transaction that is
                         // invalid in new blocks, e.g. a invalid P2SH. We DoS ban
@@ -2014,7 +2013,7 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
                         // as to the correct behavior - we may want to continue
                         // peering with non-upgraded nodes even after a soft-fork
                         // super-majority vote has passed.
-                        return DoS(100,error("ConnectInputs() : %s VerifySignature failed", GetHash().ToString()));
+                        return tx.DoS(100,error("ConnectInputs() : %s VerifySignature failed", tx.GetHash().ToString()));
                     }
                 }
             }
@@ -2031,17 +2030,17 @@ bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<ui
 
         if (!tx.IsCoinStake())
         {
-            if (nValueIn < GetValueOut())
-                return DoS(100, error("ConnectInputs() : %s value in < value out", GetHash().ToString()));
+            if (nValueIn < tx.GetValueOut())
+                return tx.DoS(100, error("ConnectInputs() : %s value in < value out", tx.GetHash().ToString()));
 
             // Tally transaction fees
             int64_t nTxFee = nValueIn - GetValueOut();
             if (nTxFee < 0)
-                return DoS(100, error("ConnectInputs() : %s nTxFee < 0", GetHash().ToString()));
+                return tx.DoS(100, error("ConnectInputs() : %s nTxFee < 0", tx.GetHash().ToString()));
 
             nFees += nTxFee;
             if (!MoneyRange(nFees))
-                return DoS(100, error("ConnectInputs() : nFees out of range"));
+                return tx.DoS(100, error("ConnectInputs() : nFees out of range"));
         }
     }
 
@@ -3009,15 +3008,6 @@ void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd)
     pnode->hashLastGetBlocksEnd = hashEnd;
 
     pnode->PushMessage("getblocks", CBlockLocator(pindexBegin), hashEnd);
-}
-
-bool static IsCanonicalBlockSignature(CBlock* pblock)
-{
-    if (pblock->IsProofOfWork()) {
-        return pblock->vchBlockSig.empty();
-    }
-
-    return IsDERSignature(pblock->vchBlockSig, false);
 }
 
 void Misbehaving(NodeId pnode, int howmuch)

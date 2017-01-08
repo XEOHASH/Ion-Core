@@ -8,7 +8,6 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "script/script.h"
-#include "compressor.h"
 #include "hash.h"
 
 #include <stdio.h>
@@ -206,13 +205,12 @@ private:
     void UpdateHash();
     
 public:
-
-    static const int CURRENT_VERSION=1;
-    int nVersion;
-    unsigned int nTime;
+    static const int32_t CURRENT_VERSION=1;
+    int32_t nVersion;
+    uint32_t nTime;                    // PPCoin: transaction timestamp
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
-    unsigned int nLockTime;
+    uint32_t nLockTime;
 
     // Denial-of-service detection:
     mutable int nDoS;
@@ -238,7 +236,7 @@ public:
 		if (ser_action.ForRead())
             UpdateHash();
     }
-        
+	
     const uint256& GetHash() const {
         return hash;
     }

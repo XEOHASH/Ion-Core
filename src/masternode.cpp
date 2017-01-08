@@ -6,6 +6,8 @@
 #include "sync.h"
 #include "util.h"
 #include "addrman.h"
+#include "consensus/validation.h"
+
 #include <boost/lexical_cast.hpp>
 
 

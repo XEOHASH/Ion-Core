@@ -5,9 +5,13 @@
 
 #include "rpc/rpcserver.h"
 #include "rpc/rpcclient.h"
-#include "init.h"
-#include <boost/algorithm/string/predicate.hpp>
 
+#include "init.h"
+#include "main.h"
+#include "ui_interface.h"
+#include "util.h"
+
+#include <boost/algorithm/string/predicate.hpp>
 
 void WaitForShutdown(boost::thread_group* threadGroup)
 {

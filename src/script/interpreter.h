@@ -35,6 +35,7 @@ enum
 enum
 {
     SCRIPT_VERIFY_NONE      = 0,
+    SCRIPT_VERIFY_NOCACHE   = (1U << 0),
 
     // Evaluate P2SH subscripts (softfork safe, BIP16).
     SCRIPT_VERIFY_P2SH      = (1U << 0),

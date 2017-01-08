@@ -12,6 +12,7 @@
 #include "darksend.h"
 #include "spork.h"
 #include "txdb.h"
+#include "consensus/validation.h"
 #include <boost/lexical_cast.hpp>
 
 using namespace std;

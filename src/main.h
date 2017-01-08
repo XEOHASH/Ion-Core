@@ -16,6 +16,7 @@
 #include "utilstrencodings.h"
 #include "streams.h"
 #include "scrypt.h"
+#include "consensus/validation.h"
 
 #include <list>
 #include <stdint.h>
@@ -72,7 +73,7 @@ static const int64_t MIN_TX_FEE = 1000;
 static const int64_t MIN_RELAY_TX_FEE = MIN_TX_FEE;
 /** No amount larger than this (in satoshi) is valid */
 static const int64_t MAX_MONEY = 20000000 * COIN; // 1M PoW coins
-inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
+bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 /** Number of blocks that can be requested at any given time from a single peer. */
@@ -83,9 +84,6 @@ static const unsigned int BLOCK_DOWNLOAD_TIMEOUT = 60;
 
 static const int64_t DRIFT = 600;
 inline int64_t FutureDrift(int64_t nTime) { return nTime + DRIFT; }
-
-/** "reject" message codes **/
-static const unsigned char REJECT_INVALID = 0x10;
 
 inline int64_t GetMNCollateral(int nHeight) { return 20000; } // *COIN is added with usage implements
 
@@ -202,8 +200,6 @@ bool FindTransactionsByDestination(const CTxDestination &dest, std::vector<uint2
 int GetInputAge(CTxIn& vin);
 int GetInputAgeIX(uint256 nTXHash, CTxIn& vin);
 int GetIXConfirmations(uint256 nTXHash);
-/** Abort with a message */
-bool AbortNode(const std::string &msg, const std::string &userMessage="");
 /** Get statistics from node state */
 bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats);
 /** Increase a node's misbehavior score. */
@@ -348,68 +344,6 @@ inline bool AllowFree(double dPriority)
 bool IsStandardTx(const CTransaction& tx, std::string& reason);
 
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight = 0, int64_t nBlockTime = 0);
-
-
-
-/** A transaction with a merkle branch linking it to the block chain. */
-class CMerkleTx : public CTransaction
-{
-private:
-    int GetDepthInMainChainINTERNAL(CBlockIndex* &pindexRet) const;
-public:
-    uint256 hashBlock;
-    std::vector<uint256> vMerkleBranch;
-    int nIndex;
-
-    // memory only
-    mutable bool fMerkleVerified;
-
-
-    CMerkleTx()
-    {
-        Init();
-    }
-
-    CMerkleTx(const CTransaction& txIn) : CTransaction(txIn)
-    {
-        Init();
-    }
-
-    void Init()
-    {
-        hashBlock = 0;
-        nIndex = -1;
-        fMerkleVerified = false;
-    }
-
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-//        nSerSize += SerReadWrite(s, *(CTransaction*)this, nType, nVersion, ser_action);
-        nVersion = this->nVersion;
-        READWRITE(hashBlock);
-        READWRITE(vMerkleBranch);
-        READWRITE(nIndex);
-    }
-
-    int SetMerkleBranch(const CBlock* pblock=NULL);
-
-    // Return depth of transaction in blockchain:
-    // -1  : not in blockchain, and not in memory pool (conflicted transaction)
-    //  0  : in memory pool, waiting to be included in a block
-    // >=1 : this many blocks deep in the main chain
-    int GetDepthInMainChain(CBlockIndex* &pindexRet, bool enableIX=true) const;
-    int GetDepthInMainChain(bool enableIX=true) const { CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet, enableIX); }
-    bool IsInMainChain() const { CBlockIndex *pindexRet; return GetDepthInMainChainINTERNAL(pindexRet) > 0; }
-    int GetBlocksToMaturity() const;
-    bool AcceptToMemoryPool(bool fLimitFree=true, bool fRejectInsaneFee=true, bool ignoreFees=false);
-    int GetTransactionLockSignatures() const;
-    bool IsTransactionLockTimedOut() const;
-};
-
-
 
 
 /**  A txdb record that contains the disk location of a transaction and the
@@ -1204,78 +1138,6 @@ public:
         return pindex->nHeight;
     }
 };
-
-
-
-
-/** Capture information about block/transaction validation */
-class CValidationState {
-private:
-    enum mode_state {
-        MODE_VALID,   //! everything ok
-        MODE_INVALID, //! network rule violation (DoS value may be set)
-        MODE_ERROR,   //! run-time error
-    } mode;
-    int nDoS;
-    std::string strRejectReason;
-    unsigned char chRejectCode;
-    bool corruptionPossible;
-public:
-    CValidationState() : mode(MODE_VALID), nDoS(0), chRejectCode(0), corruptionPossible(false) {}
-    bool DoS(int level, bool ret = false,
-             unsigned char chRejectCodeIn=0, std::string strRejectReasonIn="",
-             bool corruptionIn=false) {
-        chRejectCode = chRejectCodeIn;
-        strRejectReason = strRejectReasonIn;
-        corruptionPossible = corruptionIn;
-        if (mode == MODE_ERROR)
-            return ret;
-        nDoS += level;
-        mode = MODE_INVALID;
-        return ret;
-    }
-    bool Invalid(bool ret = false,
-                 unsigned char _chRejectCode=0, std::string _strRejectReason="") {
-        return DoS(0, ret, _chRejectCode, _strRejectReason);
-    }
-    bool Error(std::string strRejectReasonIn="") {
-        if (mode == MODE_VALID)
-            strRejectReason = strRejectReasonIn;
-        mode = MODE_ERROR;
-        return false;
-    }
-    bool Abort(const std::string &msg) {
-        AbortNode(msg);
-        return Error(msg);
-    }
-    bool IsValid() const {
-        return mode == MODE_VALID;
-    }
-    bool IsInvalid() const {
-        return mode == MODE_INVALID;
-    }
-    bool IsError() const {
-        return mode == MODE_ERROR;
-    }
-    bool IsInvalid(int &nDoSOut) const {
-        if (IsInvalid()) {
-            nDoSOut = nDoS;
-            return true;
-        }
-        return false;
-    }
-    bool CorruptionPossible() const {
-        return corruptionPossible;
-    }
-    unsigned char GetRejectCode() const { return chRejectCode; }
-    std::string GetRejectReason() const { return strRejectReason; }
-};
-
-
-
-
-
-
 
 class CWalletInterface {
 protected:

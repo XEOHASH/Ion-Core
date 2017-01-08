@@ -9,6 +9,7 @@
 
 #include "allocators.h"
 #include "serialize.h"
+#include "version.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -323,7 +324,7 @@ protected:
     
 	
 public:
-    // Disallow copies
+
     CAutoFile(const CAutoFile&);
     CAutoFile& operator=(const CAutoFile&);
 

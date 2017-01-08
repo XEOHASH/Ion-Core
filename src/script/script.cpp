@@ -9,7 +9,7 @@
 #include "compressor.h"
 
 #include "tinyformat.h"
-#include "util.h"
+#include "utilstrencodings.h"
 
 namespace {
 inline std::string ValueString(const std::vector<unsigned char>& vch)

@@ -17,7 +17,6 @@
 #include "script/script.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
-#include "primitives/transaction.h"
 
 using namespace std;
 
