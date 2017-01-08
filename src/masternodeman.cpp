@@ -5,6 +5,8 @@
 #include "core.h"
 #include "util.h"
 #include "addrman.h"
+#include "streams.h"
+
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
 

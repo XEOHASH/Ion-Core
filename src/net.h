@@ -22,6 +22,8 @@
 #include "addrman.h"
 #include "hash.h"
 #include "primitives/transaction.h"
+#include "streams.h"
+#include "utilstrencodings.h"
 
 class CNode;
 class CBlockIndex;
@@ -796,7 +798,6 @@ inline void RelayInventory(const CInv& inv)
     }
 }
 
-class CTransaction;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayTransactionLockReq(const CTransaction& tx, bool relayToAll=false);

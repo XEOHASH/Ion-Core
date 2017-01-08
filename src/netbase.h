@@ -77,10 +77,12 @@ class CNetAddr
         friend bool operator!=(const CNetAddr& a, const CNetAddr& b);
         friend bool operator<(const CNetAddr& a, const CNetAddr& b);
 
-        IMPLEMENT_SERIALIZE
-            (
-             READWRITE(FLATDATA(ip));
-            )
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(FLATDATA(ip));
+	}
 };
 
 /** A combination of a network address (CNetAddr) and a (TCP) port */
@@ -114,15 +116,17 @@ class CService : public CNetAddr
         CService(const struct in6_addr& ipv6Addr, unsigned short port);
         CService(const struct sockaddr_in6& addr);
 
-        IMPLEMENT_SERIALIZE
-            (
+            ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
              CService* pthis = const_cast<CService*>(this);
              READWRITE(FLATDATA(ip));
              unsigned short portN = htons(port);
              READWRITE(portN);
-             if (fRead)
+             if (ser_action.ForRead())
                  pthis->port = ntohs(portN);
-            )
+	}
 };
 
 typedef CService proxyType;

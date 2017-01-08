@@ -88,8 +88,10 @@ public:
         return memcmp(&scan_pubkey[0], &y.scan_pubkey[0], ec_compressed_size) < 0;
     }
     
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(this->options);
         READWRITE(this->scan_pubkey);
         READWRITE(this->spend_pubkey);
@@ -97,7 +99,7 @@ public:
         
         READWRITE(this->scan_secret);
         READWRITE(this->spend_secret);
-    );
+    };
 
 };
 

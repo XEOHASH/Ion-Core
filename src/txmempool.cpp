@@ -5,9 +5,56 @@
 
 #include "core.h"
 #include "txmempool.h"
-#include "main.h" // for CTransaction
+#include "primitives/transaction.h" // for CTransaction
 
 using namespace std;
+
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee,
+                                 int64_t _nTime, double _dPriority,
+                                 unsigned int _nHeight):
+    tx(_tx), nFee(_nFee), nTime(_nTime), dPriority(_dPriority), nHeight(_nHeight)
+{
+    nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
+    nModSize = tx.CalculateModifiedSize(nTxSize);
+    //nUsageSize = RecursiveDynamicUsage(tx);
+    feeRate = CFeeRate(nFee, nTxSize);
+
+    nCountWithDescendants = 1;
+    nSizeWithDescendants = nTxSize;
+    nFeesWithDescendants = nFee;
+}
+
+CTxMemPoolEntry::CTxMemPoolEntry(const CTxMemPoolEntry& other)
+{
+    *this = other;
+}
+
+double CTxMemPoolEntry::GetPriority(unsigned int currentHeight) const
+{
+    CAmount nValueIn = tx.GetValueOut()+nFee;
+    double deltaPriority = ((double)(currentHeight-nHeight)*nValueIn)/nModSize;
+    double dResult = dPriority + deltaPriority;
+    return dResult;
+}
+
+void CTxMemPoolEntry::SetDirty()
+{
+    nCountWithDescendants = 0;
+    nSizeWithDescendants = nTxSize;
+    nFeesWithDescendants = nFee;
+}
+
+void CTxMemPoolEntry::UpdateState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount)
+{
+    if (!IsDirty()) {
+        nSizeWithDescendants += modifySize;
+        assert(int64_t(nSizeWithDescendants) > 0);
+        nFeesWithDescendants += modifyFee;
+        assert(nFeesWithDescendants >= 0);
+        nCountWithDescendants += modifyCount;
+        assert(int64_t(nCountWithDescendants) > 0);
+    }
+}
 
 CTxMemPool::CTxMemPool()
 {

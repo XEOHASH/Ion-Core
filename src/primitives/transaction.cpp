@@ -62,6 +62,13 @@ std::string CTxOut::ToString() const
     return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue), scriptPubKey.ToString());
 }
 
+// when building libconsensus GetAdjustedTime will return 0
+CTransaction::CTransaction() : hash(0), nVersion(CTransaction::CURRENT_VERSION), nTime(GetAdjustedTime()), vin(), vout(), nLockTime(0), nDoS(0) { }
+
+CTransaction::CTransaction(const CMutableTransaction &tx) : nVersion(tx.nVersion), nTime(tx.nTime), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime, nDoS(0)) {
+    UpdateHash();
+}
+
 CMutableTransaction::CMutableTransaction() : nVersion(CTransaction::CURRENT_VERSION), nTime(GetAdjustedTime()), nLockTime(0) {}
 CMutableTransaction::CMutableTransaction(const CTransaction& tx) : nVersion(tx.nVersion), nTime(tx.nTime), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime) {}
 
@@ -95,7 +102,17 @@ CMutableTransaction::CMutableTransaction(const CTransaction& tx) : nVersion(tx.n
         return nValueOut;
     }
     
+void CTransaction::UpdateHash() const
+{
+    *const_cast<uint256*>(&hash) = SerializeHash(*this);
+}
+
     uint256 CTransaction::GetHash() const
     {
         return SerializeHash(*this);
     }
+    
+	uint256 CMutableTransaction::GetHash() const
+	{
+		return SerializeHash(*this);
+	}

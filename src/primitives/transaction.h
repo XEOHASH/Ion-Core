@@ -8,18 +8,16 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "script/script.h"
-#include "script/interpreter.h"
 #include "compressor.h"
+#include "hash.h"
 
 #include <stdio.h>
 
 struct CDiskTxPos;
-
-class CScript;
-class CTransaction;
 class CTxIndex;
 class CTxDB;
 class CBlockIndex;
+//class CTransaction;
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
@@ -30,7 +28,14 @@ public:
 
     COutPoint() { SetNull(); }
     COutPoint(uint256 hashIn, unsigned int nIn) { hash = hashIn; n = nIn; }
-    IMPLEMENT_SERIALIZE( READWRITE(FLATDATA(*this)); )
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(FLATDATA(*this)); 
+	}
+	
     void SetNull() { hash = 0; n = (unsigned int) -1; }
     bool IsNull() const { return (hash == 0 && n == (unsigned int) -1); }
 
@@ -54,18 +59,6 @@ public:
 
 };
 
-/** An inpoint - a combination of a transaction and an index n into its vin */
-class CInPoint
-{
-public:
-    CTransaction* ptx;
-    unsigned int n;
-
-    CInPoint() { SetNull(); }
-    CInPoint(CTransaction* ptxIn, unsigned int nIn) { ptx = ptxIn; n = nIn; }
-    void SetNull() { ptx = NULL; n = (unsigned int) -1; }
-    bool IsNull() const { return (ptx == NULL && n == (unsigned int) -1); }
-};
 
 /** An input of a transaction.  It contains the location of the previous
  * transaction's output that it claims and a signature that matches the
@@ -88,12 +81,14 @@ public:
 
     explicit CTxIn(uint256 hashPrevTx, unsigned int nOut, CScript scriptSigIn=CScript(), unsigned int nSequenceIn=std::numeric_limits<unsigned int>::max());
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(prevout);
-        READWRITE(scriptSig);
+        READWRITE(*(CScriptBase*)(&scriptSig));
         READWRITE(nSequence);
-    )
+    }
 
     bool IsFinal() const
     {
@@ -135,11 +130,13 @@ public:
 
     CTxOut(int64_t nValueIn, CScript scriptPubKeyIn);
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(nValue);
-        READWRITE(scriptPubKey);
-    )
+        READWRITE(*(CScriptBase*)(&scriptPubKey));
+    }
 
     void SetNull()
     {
@@ -194,16 +191,22 @@ public:
     std::string ToString() const;
 };
 
-typedef std::map<uint256, std::pair<CTxIndex, CTransaction> > MapPrevTx;
-
 struct CMutableTransaction;
+class CTransaction;
+
+typedef std::map<uint256, std::pair<CTxIndex, CTransaction> > MapPrevTx;
 
 /** The basic transaction that is broadcasted on the network and contained in
  * blocks.  A transaction can contain multiple inputs and outputs.
  */
 class CTransaction
 {
+private:
+    uint256 hash;
+    void UpdateHash();
+    
 public:
+
     static const int CURRENT_VERSION=1;
     int nVersion;
     unsigned int nTime;
@@ -214,40 +217,32 @@ public:
     // Denial-of-service detection:
     mutable int nDoS;
     bool DoS(int nDoSIn, bool fIn) const { nDoS += nDoSIn; return fIn; }
-
-    CTransaction()
-    {
-        SetNull();
-    }
+	
+    CTransaction();
 
     /** Convert a CMutableTransaction into a CTransaction. */
     CTransaction(const CMutableTransaction &tx);
 
-    CTransaction(int nVersion, unsigned int nTime, const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout, unsigned int nLockTime)
-        : nVersion(nVersion), nTime(nTime), vin(vin), vout(vout), nLockTime(nLockTime), nDoS(0)
-    {
-    }
+    CTransaction(int nVersion, unsigned int nTime, const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout, unsigned int nLockTime);
 
-    IMPLEMENT_SERIALIZE
-    (
-        READWRITE(this->nVersion);
+    ADD_SERIALIZE_METHODS;
+    
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(*const_cast<int32_t*>(&this->nVersion));
         nVersion = this->nVersion;
-        READWRITE(nTime);
-        READWRITE(vin);
-        READWRITE(vout);
-        READWRITE(nLockTime);
-    )
-
-    void SetNull()
-    {
-        nVersion = CTransaction::CURRENT_VERSION;
-        nTime = GetAdjustedTime();
-        vin.clear();
-        vout.clear();
-        nLockTime = 0;
-        nDoS = 0;  // Denial-of-service prevention
+        READWRITE(*const_cast<uint32_t*>(&nTime));
+        READWRITE(*const_cast<std::vector<CTxIn>*>(&vin));
+        READWRITE(*const_cast<std::vector<CTxOut>*>(&vout));
+        READWRITE(*const_cast<uint32_t*>(&nLockTime));
+		if (ser_action.ForRead())
+            UpdateHash();
     }
-
+        
+    const uint256& GetHash() const {
+        return hash;
+    }
+    
     bool IsNull() const
     {
         return (vin.empty() && vout.empty());
@@ -263,7 +258,7 @@ public:
         // ppcoin: the coin stake transaction is marked with the first output empty
         return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
     }
-
+    
     // Compute priority, given priority of inputs and (optionally) tx size
     double ComputePriority(double dPriorityInputs, unsigned int nTxSize=0) const;
 
@@ -283,7 +278,7 @@ public:
     int64_t GetValueIn(const MapPrevTx& mapInputs) const;
 
     bool ReadFromDisk(CDiskTxPos pos, FILE** pfileRet=NULL);
-
+/*
     friend bool operator==(const CTransaction& a, const CTransaction& b)
     {
         return (a.nVersion  == b.nVersion &&
@@ -297,6 +292,16 @@ public:
     {
         return !(a == b);
     }
+*/  
+    friend bool operator==(const CTransaction& a, const CTransaction& b)
+    {
+        return a.hash == b.hash;
+    }
+
+    friend bool operator!=(const CTransaction& a, const CTransaction& b)
+    {
+        return a.hash != b.hash;
+    }
 
     std::string ToString() const;
 
@@ -306,37 +311,22 @@ public:
     bool ReadFromDisk(COutPoint prevout);
     bool DisconnectInputs(CTxDB& txdb);
 
-    /** Fetch from memory and/or disk. inputsRet keys are transaction hashes.
-
-     @param[in] txdb    Transaction database
-     @param[in] mapTestPool List of pending changes to the transaction index database
-     @param[in] fBlock  True if being called to add a new best-block to the chain
-     @param[in] fMiner  True if being called by CreateNewBlock
-     @param[out] inputsRet  Pointers to this transaction's inputs
-     @param[out] fInvalid   returns true if transaction is invalid
-     @return    Returns true if all inputs are in txdb or mapTestPool
-     */
-    bool FetchInputs(CTxDB& txdb, const std::map<uint256, CTxIndex>& mapTestPool,
-                     bool fBlock, bool fMiner, MapPrevTx& inputsRet, bool& fInvalid);
-
-    /** Sanity check previous transactions, then, if all checks succeed,
-        mark them as spent by this transaction.
-
-        @param[in] inputs   Previous transactions (from FetchInputs)
-        @param[out] mapTestPool Keeps track of inputs that need to be updated on disk
-        @param[in] posThisTx    Position of this transaction on disk
-        @param[in] pindexBlock
-        @param[in] fBlock   true if called from ConnectBlock
-        @param[in] fMiner   true if called from CreateNewBlock
-        @return Returns true if all checks succeed
-     */
-    bool ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
-                       std::map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
-                       const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, unsigned int flags = STANDARD_SCRIPT_VERIFY_FLAGS, bool fValidateSig = true);
-    bool CheckTransaction() const;
     bool GetCoinAge(CTxDB& txdb, const CBlockIndex* pindexPrev, uint64_t& nCoinAge) const;
 
     const CTxOut& GetOutputFor(const CTxIn& input, const MapPrevTx& inputs) const;
+};
+
+/** An inpoint - a combination of a transaction and an index n into its vin */
+class CInPoint
+{
+public:
+    CTransaction* ptx;
+    unsigned int n;
+
+    CInPoint() { SetNull(); }
+    CInPoint(CTransaction* ptxIn, unsigned int nIn) { ptx = ptxIn; n = nIn; }
+    void SetNull() { ptx = NULL; n = (unsigned int) -1; }
+    bool IsNull() const { return (ptx == NULL && n == (unsigned int) -1); }
 };
 
 /** A mutable version of CTransaction. */
@@ -370,17 +360,7 @@ struct CMutableTransaction
     /** Compute the hash of this CMutableTransaction. This is computed on the
      * fly, as opposed to GetHash() in CTransaction, which uses a cached result.
      */
-	uint256 GetHash() const
-	{
-		return SerializeHash(*this);
-	}
-	
-    int64_t GetMinFee(size_t nBlockSize=1) const
-    {
-        CTransaction tmp(*this);
-        size_t nBytes = ::GetSerializeSize(tmp, SER_NETWORK, PROTOCOL_VERSION);
-        return ::GetMinFee(nBytes, nBlockSize);
-    }
+	uint256 GetHash() const;
 };
 
 #endif

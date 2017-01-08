@@ -400,7 +400,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
 
         // FetchInputs aborts on failure, so we go one at a time.
         tempTx.vin.push_back(mergedTx.vin[i]);
-        tempTx.FetchInputs(txdb, unused, false, false, mapPrevTx, fInvalid);
+        FetchInputs(tempTx, txdb, unused, false, false, mapPrevTx, fInvalid);
 
         // Copy results into mapPrevOut:
         BOOST_FOREACH(const CTxIn& txin, tempTx.vin)

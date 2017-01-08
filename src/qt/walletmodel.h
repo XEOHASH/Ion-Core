@@ -70,7 +70,7 @@ public:
         std::string sLabel = label.toStdString();
         std::string sMessage = message.toStdString();
 
-        unsigned int nSerSize = 0;
+//        unsigned int nSerSize = 0;
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
         READWRITE(sAddress);

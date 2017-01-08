@@ -10,6 +10,7 @@
 #define ION_SCRIPT_INTERPRETER_H
 
 #include "script_error.h"
+#include "primitives/transaction.h"
 
 #include <vector>
 #include <stdint.h>
@@ -17,7 +18,6 @@
 
 class CPubKey;
 class CScript;
-class CTransaction;
 class uint256;
 
 struct CMutableTransaction;

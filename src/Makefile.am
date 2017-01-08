@@ -102,9 +102,9 @@ ION_CORE_H = \
   pbkdf2.h \
   protocol.h \
   pubkey.h \
-  rpcclient.h \
-  rpcprotocol.h \
-  rpcserver.h \
+  rpc/rpcclient.h \
+  rpc/rpcprotocol.h \
+  rpc/rpcserver.h \
   script/interpreter.h \
   script/script.h \
   script/sigcache.h \
@@ -123,15 +123,14 @@ ION_CORE_H = \
   timedata.h \
   tinyformat.h \
   txdb.h \
-  txdb-leveldb.h \
   txmempool.h \
   ui_interface.h \
   uint256.h \
   util.h \
   utilstrencodings.h \
   version.h \
-  walletdb.h \
-  wallet.h
+  wallet/walletdb.h \
+  wallet/wallet.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -146,17 +145,16 @@ libion_server_a_SOURCES = \
   alert.cpp \
   checkpoints.cpp \
   init.cpp \
-  txdb-leveldb.cpp \
   main.cpp \
   miner.cpp \
   net.cpp \
   noui.cpp \
-  rpcblockchain.cpp \
-  rpcmining.cpp \
-  rpcmisc.cpp \
-  rpcnet.cpp \
-  rpcrawtransaction.cpp \
-  rpcserver.cpp \
+  rpc/rpcblockchain.cpp \
+  rpc/rpcmining.cpp \
+  rpc/rpcmisc.cpp \
+  rpc/rpcnet.cpp \
+  rpc/rpcrawtransaction.cpp \
+  rpc/rpcserver.cpp \
   timedata.cpp \
   txmempool.cpp \
   script/sigcache.cpp \
@@ -182,7 +180,7 @@ libion_wallet_a_SOURCES = \
   activemasternode.cpp \
   darksend.cpp \
   darksend-relay.cpp \
-  db.cpp \
+  wallet/db.cpp \
   crypter.cpp \
   instantx.cpp \
   masternodeconfig.cpp \
@@ -190,11 +188,11 @@ libion_wallet_a_SOURCES = \
   masternodeman.cpp \
   masternode-payments.cpp \
   masternode-pos.cpp \
-  rpcdump.cpp \
-  rpcwallet.cpp \
+  rpc/rpcdump.cpp \
+  wallet/rpcwallet.cpp \
   kernel.cpp \
-  wallet.cpp \
-  walletdb.cpp \
+  wallet/wallet.cpp \
+  wallet/walletdb.cpp \
   $(ION_CORE_H)
 
 # crypto primitives library
@@ -248,7 +246,7 @@ libion_util_a_SOURCES = \
   compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
-  rpcprotocol.cpp \
+  rpc/rpcprotocol.cpp \
   sync.cpp \
   util.cpp \
   utilstrencodings.cpp \
@@ -263,7 +261,7 @@ libion_util_a_SOURCES = \
 libion_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
 libion_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libion_cli_a_SOURCES = \
-  rpcclient.cpp \
+  rpc/rpcclient.cpp \
   $(ION_CORE_H)
 
 nodist_libion_util_a_SOURCES = $(srcdir)/obj/build.h

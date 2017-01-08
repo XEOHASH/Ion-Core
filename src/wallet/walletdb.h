@@ -55,12 +55,15 @@ public:
         nCreateTime = nCreateTime_;
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
         READWRITE(nCreateTime);
-    )
+    }
 
     void SetNull()
     {
@@ -84,11 +87,14 @@ public:
     CPubKey pkEphem;
     CPubKey pkScan;
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+
         READWRITE(pkEphem);
         READWRITE(pkScan);
-    )
+    }
 
 };
 

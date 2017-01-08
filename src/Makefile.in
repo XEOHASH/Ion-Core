@@ -244,7 +244,7 @@ leveldb_libmemenv_a_OBJECTS = $(am_leveldb_libmemenv_a_OBJECTS)
 libion_cli_a_AR = $(AR) $(ARFLAGS)
 libion_cli_a_LIBADD =
 am__objects_3 =
-am_libion_cli_a_OBJECTS = libion_cli_a-rpcclient.$(OBJEXT) \
+am_libion_cli_a_OBJECTS = rpc/libion_cli_a-rpcclient.$(OBJEXT) \
 	$(am__objects_3)
 libion_cli_a_OBJECTS = $(am_libion_cli_a_OBJECTS)
 libion_common_a_AR = $(AR) $(ARFLAGS)
@@ -270,16 +270,15 @@ libion_server_a_AR = $(AR) $(ARFLAGS)
 libion_server_a_LIBADD =
 am_libion_server_a_OBJECTS = libion_server_a-alert.$(OBJEXT) \
 	libion_server_a-checkpoints.$(OBJEXT) \
-	libion_server_a-init.$(OBJEXT) \
-	libion_server_a-txdb-leveldb.$(OBJEXT) \
-	libion_server_a-main.$(OBJEXT) libion_server_a-miner.$(OBJEXT) \
-	libion_server_a-net.$(OBJEXT) libion_server_a-noui.$(OBJEXT) \
-	libion_server_a-rpcblockchain.$(OBJEXT) \
-	libion_server_a-rpcmining.$(OBJEXT) \
-	libion_server_a-rpcmisc.$(OBJEXT) \
-	libion_server_a-rpcnet.$(OBJEXT) \
-	libion_server_a-rpcrawtransaction.$(OBJEXT) \
-	libion_server_a-rpcserver.$(OBJEXT) \
+	libion_server_a-init.$(OBJEXT) libion_server_a-main.$(OBJEXT) \
+	libion_server_a-miner.$(OBJEXT) libion_server_a-net.$(OBJEXT) \
+	libion_server_a-noui.$(OBJEXT) \
+	rpc/libion_server_a-rpcblockchain.$(OBJEXT) \
+	rpc/libion_server_a-rpcmining.$(OBJEXT) \
+	rpc/libion_server_a-rpcmisc.$(OBJEXT) \
+	rpc/libion_server_a-rpcnet.$(OBJEXT) \
+	rpc/libion_server_a-rpcrawtransaction.$(OBJEXT) \
+	rpc/libion_server_a-rpcserver.$(OBJEXT) \
 	libion_server_a-timedata.$(OBJEXT) \
 	libion_server_a-txmempool.$(OBJEXT) \
 	script/libion_server_a-sigcache.$(OBJEXT) $(am__objects_3)
@@ -290,7 +289,7 @@ am_libion_util_a_OBJECTS = libion_util_a-allocators.$(OBJEXT) \
 	compat/libion_util_a-strnlen.$(OBJEXT) \
 	compat/libion_util_a-glibc_sanity.$(OBJEXT) \
 	compat/libion_util_a-glibcxx_sanity.$(OBJEXT) \
-	libion_util_a-rpcprotocol.$(OBJEXT) \
+	rpc/libion_util_a-rpcprotocol.$(OBJEXT) \
 	libion_util_a-sync.$(OBJEXT) libion_util_a-util.$(OBJEXT) \
 	libion_util_a-utilstrencodings.$(OBJEXT) $(am__objects_3)
 nodist_libion_util_a_OBJECTS =
@@ -302,18 +301,19 @@ am_libion_wallet_a_OBJECTS =  \
 	libion_wallet_a-activemasternode.$(OBJEXT) \
 	libion_wallet_a-darksend.$(OBJEXT) \
 	libion_wallet_a-darksend-relay.$(OBJEXT) \
-	libion_wallet_a-db.$(OBJEXT) libion_wallet_a-crypter.$(OBJEXT) \
+	wallet/libion_wallet_a-db.$(OBJEXT) \
+	libion_wallet_a-crypter.$(OBJEXT) \
 	libion_wallet_a-instantx.$(OBJEXT) \
 	libion_wallet_a-masternodeconfig.$(OBJEXT) \
 	libion_wallet_a-masternode.$(OBJEXT) \
 	libion_wallet_a-masternodeman.$(OBJEXT) \
 	libion_wallet_a-masternode-payments.$(OBJEXT) \
 	libion_wallet_a-masternode-pos.$(OBJEXT) \
-	libion_wallet_a-rpcdump.$(OBJEXT) \
-	libion_wallet_a-rpcwallet.$(OBJEXT) \
+	rpc/libion_wallet_a-rpcdump.$(OBJEXT) \
+	wallet/libion_wallet_a-rpcwallet.$(OBJEXT) \
 	libion_wallet_a-kernel.$(OBJEXT) \
-	libion_wallet_a-wallet.$(OBJEXT) \
-	libion_wallet_a-walletdb.$(OBJEXT) $(am__objects_3)
+	wallet/libion_wallet_a-wallet.$(OBJEXT) \
+	wallet/libion_wallet_a-walletdb.$(OBJEXT) $(am__objects_3)
 libion_wallet_a_OBJECTS = $(am_libion_wallet_a_OBJECTS)
 libion_zmq_a_AR = $(AR) $(ARFLAGS)
 libion_zmq_a_LIBADD =
@@ -1320,9 +1320,9 @@ ION_CORE_H = \
   pbkdf2.h \
   protocol.h \
   pubkey.h \
-  rpcclient.h \
-  rpcprotocol.h \
-  rpcserver.h \
+  rpc/rpcclient.h \
+  rpc/rpcprotocol.h \
+  rpc/rpcserver.h \
   script/interpreter.h \
   script/script.h \
   script/sigcache.h \
@@ -1341,15 +1341,14 @@ ION_CORE_H = \
   timedata.h \
   tinyformat.h \
   txdb.h \
-  txdb-leveldb.h \
   txmempool.h \
   ui_interface.h \
   uint256.h \
   util.h \
   utilstrencodings.h \
   version.h \
-  walletdb.h \
-  wallet.h
+  wallet/walletdb.h \
+  wallet/wallet.h
 
 
 # server: shared between iond and ion-qt
@@ -1359,17 +1358,16 @@ libion_server_a_SOURCES = \
   alert.cpp \
   checkpoints.cpp \
   init.cpp \
-  txdb-leveldb.cpp \
   main.cpp \
   miner.cpp \
   net.cpp \
   noui.cpp \
-  rpcblockchain.cpp \
-  rpcmining.cpp \
-  rpcmisc.cpp \
-  rpcnet.cpp \
-  rpcrawtransaction.cpp \
-  rpcserver.cpp \
+  rpc/rpcblockchain.cpp \
+  rpc/rpcmining.cpp \
+  rpc/rpcmisc.cpp \
+  rpc/rpcnet.cpp \
+  rpc/rpcrawtransaction.cpp \
+  rpc/rpcserver.cpp \
   timedata.cpp \
   txmempool.cpp \
   script/sigcache.cpp \
@@ -1391,7 +1389,7 @@ libion_wallet_a_SOURCES = \
   activemasternode.cpp \
   darksend.cpp \
   darksend-relay.cpp \
-  db.cpp \
+  wallet/db.cpp \
   crypter.cpp \
   instantx.cpp \
   masternodeconfig.cpp \
@@ -1399,11 +1397,11 @@ libion_wallet_a_SOURCES = \
   masternodeman.cpp \
   masternode-payments.cpp \
   masternode-pos.cpp \
-  rpcdump.cpp \
-  rpcwallet.cpp \
+  rpc/rpcdump.cpp \
+  wallet/rpcwallet.cpp \
   kernel.cpp \
-  wallet.cpp \
-  walletdb.cpp \
+  wallet/wallet.cpp \
+  wallet/walletdb.cpp \
   $(ION_CORE_H)
 
 
@@ -1460,7 +1458,7 @@ libion_util_a_SOURCES = \
   compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
-  rpcprotocol.cpp \
+  rpc/rpcprotocol.cpp \
   sync.cpp \
   util.cpp \
   utilstrencodings.cpp \
@@ -1476,7 +1474,7 @@ libion_util_a_SOURCES = \
 libion_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(ION_INCLUDES)
 libion_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libion_cli_a_SOURCES = \
-  rpcclient.cpp \
+  rpc/rpcclient.cpp \
   $(ION_CORE_H)
 
 nodist_libion_util_a_SOURCES = $(srcdir)/obj/build.h
@@ -2220,6 +2218,14 @@ leveldb/libmemenv.a: $(leveldb_libmemenv_a_OBJECTS) $(leveldb_libmemenv_a_DEPEND
 	$(AM_V_at)-rm -f leveldb/libmemenv.a
 	$(AM_V_AR)$(leveldb_libmemenv_a_AR) leveldb/libmemenv.a $(leveldb_libmemenv_a_OBJECTS) $(leveldb_libmemenv_a_LIBADD)
 	$(AM_V_at)$(RANLIB) leveldb/libmemenv.a
+rpc/$(am__dirstamp):
+	@$(MKDIR_P) rpc
+	@: > rpc/$(am__dirstamp)
+rpc/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) rpc/$(DEPDIR)
+	@: > rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_cli_a-rpcclient.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
 
 libion_cli.a: $(libion_cli_a_OBJECTS) $(libion_cli_a_DEPENDENCIES) $(EXTRA_libion_cli_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libion_cli.a
@@ -2246,6 +2252,18 @@ libion_common.a: $(libion_common_a_OBJECTS) $(libion_common_a_DEPENDENCIES) $(EX
 	$(AM_V_at)-rm -f libion_common.a
 	$(AM_V_AR)$(libion_common_a_AR) libion_common.a $(libion_common_a_OBJECTS) $(libion_common_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libion_common.a
+rpc/libion_server_a-rpcblockchain.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_server_a-rpcmining.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_server_a-rpcmisc.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_server_a-rpcnet.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_server_a-rpcrawtransaction.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_server_a-rpcserver.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
 script/libion_server_a-sigcache.$(OBJEXT): script/$(am__dirstamp) \
 	script/$(DEPDIR)/$(am__dirstamp)
 
@@ -2265,11 +2283,29 @@ compat/libion_util_a-glibc_sanity.$(OBJEXT): compat/$(am__dirstamp) \
 	compat/$(DEPDIR)/$(am__dirstamp)
 compat/libion_util_a-glibcxx_sanity.$(OBJEXT): compat/$(am__dirstamp) \
 	compat/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_util_a-rpcprotocol.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
 
 libion_util.a: $(libion_util_a_OBJECTS) $(libion_util_a_DEPENDENCIES) $(EXTRA_libion_util_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libion_util.a
 	$(AM_V_AR)$(libion_util_a_AR) libion_util.a $(libion_util_a_OBJECTS) $(libion_util_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libion_util.a
+wallet/$(am__dirstamp):
+	@$(MKDIR_P) wallet
+	@: > wallet/$(am__dirstamp)
+wallet/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) wallet/$(DEPDIR)
+	@: > wallet/$(DEPDIR)/$(am__dirstamp)
+wallet/libion_wallet_a-db.$(OBJEXT): wallet/$(am__dirstamp) \
+	wallet/$(DEPDIR)/$(am__dirstamp)
+rpc/libion_wallet_a-rpcdump.$(OBJEXT): rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+wallet/libion_wallet_a-rpcwallet.$(OBJEXT): wallet/$(am__dirstamp) \
+	wallet/$(DEPDIR)/$(am__dirstamp)
+wallet/libion_wallet_a-wallet.$(OBJEXT): wallet/$(am__dirstamp) \
+	wallet/$(DEPDIR)/$(am__dirstamp)
+wallet/libion_wallet_a-walletdb.$(OBJEXT): wallet/$(am__dirstamp) \
+	wallet/$(DEPDIR)/$(am__dirstamp)
 
 libion_wallet.a: $(libion_wallet_a_OBJECTS) $(libion_wallet_a_DEPENDENCIES) $(EXTRA_libion_wallet_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libion_wallet.a
@@ -2661,8 +2697,10 @@ mostlyclean-compile:
 	-rm -f qt/moc_plugins/mrichtexteditor/*.$(OBJEXT)
 	-rm -f qt/plugins/mrichtexteditor/*.$(OBJEXT)
 	-rm -f qt/res/*.$(OBJEXT)
+	-rm -f rpc/*.$(OBJEXT)
 	-rm -f script/*.$(OBJEXT)
 	-rm -f script/*.lo
+	-rm -f wallet/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -2670,7 +2708,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ion_cli-ion-cli.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ion_tx-ion-tx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iond-bitcoind.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_cli_a-rpcclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-allocators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-base58.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_common_a-chainparams.Po@am__quote@
@@ -2690,17 +2727,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-miner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-noui.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-rpcblockchain.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-rpcmining.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-rpcmisc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-rpcnet.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-rpcrawtransaction.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-rpcserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-timedata.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-txdb-leveldb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_server_a-txmempool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-allocators.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-rpcprotocol.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-sync.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_util_a-utilstrencodings.Po@am__quote@
@@ -2708,7 +2737,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-crypter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-darksend-relay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-darksend.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-instantx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-kernel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-masternode-payments.Po@am__quote@
@@ -2716,10 +2744,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-masternode.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-masternodeconfig.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-masternodeman.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-rpcdump.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-rpcwallet.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-wallet.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libion_wallet_a-walletdb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-allocators.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-ecwrapper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libionconsensus_la-hash.Plo@am__quote@
@@ -2887,6 +2911,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@qt/$(DEPDIR)/qt_libionqt_a-walletmodeltransaction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/moc_plugins/mrichtexteditor/$(DEPDIR)/qt_libionqt_a-mrichtextedit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/plugins/mrichtexteditor/$(DEPDIR)/qt_libionqt_a-mrichtextedit.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_cli_a-rpcclient.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_server_a-rpcmining.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_server_a-rpcmisc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_server_a-rpcnet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_server_a-rpcserver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-interpreter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-script.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libion_common_a-script_error.Po@am__quote@
@@ -2897,6 +2930,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-ionconsensus.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-ionconsensus_dummy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@script/$(DEPDIR)/libionconsensus_la-script.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@wallet/$(DEPDIR)/libion_wallet_a-db.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@wallet/$(DEPDIR)/libion_wallet_a-wallet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@wallet/$(DEPDIR)/libion_wallet_a-walletdb.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -3594,19 +3631,19 @@ leveldb/helpers/memenv/leveldb_libmemenv_a-memenv.obj: leveldb/helpers/memenv/me
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(leveldb_libmemenv_a_CPPFLAGS) $(CPPFLAGS) $(leveldb_libmemenv_a_CXXFLAGS) $(CXXFLAGS) -c -o leveldb/helpers/memenv/leveldb_libmemenv_a-memenv.obj `if test -f 'leveldb/helpers/memenv/memenv.cc'; then $(CYGPATH_W) 'leveldb/helpers/memenv/memenv.cc'; else $(CYGPATH_W) '$(srcdir)/leveldb/helpers/memenv/memenv.cc'; fi`
 
-libion_cli_a-rpcclient.o: rpcclient.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -MT libion_cli_a-rpcclient.o -MD -MP -MF $(DEPDIR)/libion_cli_a-rpcclient.Tpo -c -o libion_cli_a-rpcclient.o `test -f 'rpcclient.cpp' || echo '$(srcdir)/'`rpcclient.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_cli_a-rpcclient.Tpo $(DEPDIR)/libion_cli_a-rpcclient.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcclient.cpp' object='libion_cli_a-rpcclient.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_cli_a-rpcclient.o: rpc/rpcclient.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_cli_a-rpcclient.o -MD -MP -MF rpc/$(DEPDIR)/libion_cli_a-rpcclient.Tpo -c -o rpc/libion_cli_a-rpcclient.o `test -f 'rpc/rpcclient.cpp' || echo '$(srcdir)/'`rpc/rpcclient.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_cli_a-rpcclient.Tpo rpc/$(DEPDIR)/libion_cli_a-rpcclient.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcclient.cpp' object='rpc/libion_cli_a-rpcclient.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_cli_a-rpcclient.o `test -f 'rpcclient.cpp' || echo '$(srcdir)/'`rpcclient.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_cli_a-rpcclient.o `test -f 'rpc/rpcclient.cpp' || echo '$(srcdir)/'`rpc/rpcclient.cpp
 
-libion_cli_a-rpcclient.obj: rpcclient.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -MT libion_cli_a-rpcclient.obj -MD -MP -MF $(DEPDIR)/libion_cli_a-rpcclient.Tpo -c -o libion_cli_a-rpcclient.obj `if test -f 'rpcclient.cpp'; then $(CYGPATH_W) 'rpcclient.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcclient.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_cli_a-rpcclient.Tpo $(DEPDIR)/libion_cli_a-rpcclient.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcclient.cpp' object='libion_cli_a-rpcclient.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_cli_a-rpcclient.obj: rpc/rpcclient.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_cli_a-rpcclient.obj -MD -MP -MF rpc/$(DEPDIR)/libion_cli_a-rpcclient.Tpo -c -o rpc/libion_cli_a-rpcclient.obj `if test -f 'rpc/rpcclient.cpp'; then $(CYGPATH_W) 'rpc/rpcclient.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcclient.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_cli_a-rpcclient.Tpo rpc/$(DEPDIR)/libion_cli_a-rpcclient.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcclient.cpp' object='rpc/libion_cli_a-rpcclient.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_cli_a-rpcclient.obj `if test -f 'rpcclient.cpp'; then $(CYGPATH_W) 'rpcclient.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcclient.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_cli_a_CPPFLAGS) $(CPPFLAGS) $(libion_cli_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_cli_a-rpcclient.obj `if test -f 'rpc/rpcclient.cpp'; then $(CYGPATH_W) 'rpc/rpcclient.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcclient.cpp'; fi`
 
 libion_common_a-allocators.o: allocators.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_common_a_CPPFLAGS) $(CPPFLAGS) $(libion_common_a_CXXFLAGS) $(CXXFLAGS) -MT libion_common_a-allocators.o -MD -MP -MF $(DEPDIR)/libion_common_a-allocators.Tpo -c -o libion_common_a-allocators.o `test -f 'allocators.cpp' || echo '$(srcdir)/'`allocators.cpp
@@ -3888,20 +3925,6 @@ libion_server_a-init.obj: init.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-init.obj `if test -f 'init.cpp'; then $(CYGPATH_W) 'init.cpp'; else $(CYGPATH_W) '$(srcdir)/init.cpp'; fi`
 
-libion_server_a-txdb-leveldb.o: txdb-leveldb.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-txdb-leveldb.o -MD -MP -MF $(DEPDIR)/libion_server_a-txdb-leveldb.Tpo -c -o libion_server_a-txdb-leveldb.o `test -f 'txdb-leveldb.cpp' || echo '$(srcdir)/'`txdb-leveldb.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-txdb-leveldb.Tpo $(DEPDIR)/libion_server_a-txdb-leveldb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='txdb-leveldb.cpp' object='libion_server_a-txdb-leveldb.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-txdb-leveldb.o `test -f 'txdb-leveldb.cpp' || echo '$(srcdir)/'`txdb-leveldb.cpp
-
-libion_server_a-txdb-leveldb.obj: txdb-leveldb.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-txdb-leveldb.obj -MD -MP -MF $(DEPDIR)/libion_server_a-txdb-leveldb.Tpo -c -o libion_server_a-txdb-leveldb.obj `if test -f 'txdb-leveldb.cpp'; then $(CYGPATH_W) 'txdb-leveldb.cpp'; else $(CYGPATH_W) '$(srcdir)/txdb-leveldb.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-txdb-leveldb.Tpo $(DEPDIR)/libion_server_a-txdb-leveldb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='txdb-leveldb.cpp' object='libion_server_a-txdb-leveldb.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-txdb-leveldb.obj `if test -f 'txdb-leveldb.cpp'; then $(CYGPATH_W) 'txdb-leveldb.cpp'; else $(CYGPATH_W) '$(srcdir)/txdb-leveldb.cpp'; fi`
-
 libion_server_a-main.o: main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-main.o -MD -MP -MF $(DEPDIR)/libion_server_a-main.Tpo -c -o libion_server_a-main.o `test -f 'main.cpp' || echo '$(srcdir)/'`main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-main.Tpo $(DEPDIR)/libion_server_a-main.Po
@@ -3958,89 +3981,89 @@ libion_server_a-noui.obj: noui.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-noui.obj `if test -f 'noui.cpp'; then $(CYGPATH_W) 'noui.cpp'; else $(CYGPATH_W) '$(srcdir)/noui.cpp'; fi`
 
-libion_server_a-rpcblockchain.o: rpcblockchain.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcblockchain.o -MD -MP -MF $(DEPDIR)/libion_server_a-rpcblockchain.Tpo -c -o libion_server_a-rpcblockchain.o `test -f 'rpcblockchain.cpp' || echo '$(srcdir)/'`rpcblockchain.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcblockchain.Tpo $(DEPDIR)/libion_server_a-rpcblockchain.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcblockchain.cpp' object='libion_server_a-rpcblockchain.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcblockchain.o: rpc/rpcblockchain.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcblockchain.o -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Tpo -c -o rpc/libion_server_a-rpcblockchain.o `test -f 'rpc/rpcblockchain.cpp' || echo '$(srcdir)/'`rpc/rpcblockchain.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Tpo rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcblockchain.cpp' object='rpc/libion_server_a-rpcblockchain.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcblockchain.o `test -f 'rpcblockchain.cpp' || echo '$(srcdir)/'`rpcblockchain.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcblockchain.o `test -f 'rpc/rpcblockchain.cpp' || echo '$(srcdir)/'`rpc/rpcblockchain.cpp
 
-libion_server_a-rpcblockchain.obj: rpcblockchain.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcblockchain.obj -MD -MP -MF $(DEPDIR)/libion_server_a-rpcblockchain.Tpo -c -o libion_server_a-rpcblockchain.obj `if test -f 'rpcblockchain.cpp'; then $(CYGPATH_W) 'rpcblockchain.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcblockchain.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcblockchain.Tpo $(DEPDIR)/libion_server_a-rpcblockchain.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcblockchain.cpp' object='libion_server_a-rpcblockchain.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcblockchain.obj: rpc/rpcblockchain.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcblockchain.obj -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Tpo -c -o rpc/libion_server_a-rpcblockchain.obj `if test -f 'rpc/rpcblockchain.cpp'; then $(CYGPATH_W) 'rpc/rpcblockchain.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcblockchain.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Tpo rpc/$(DEPDIR)/libion_server_a-rpcblockchain.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcblockchain.cpp' object='rpc/libion_server_a-rpcblockchain.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcblockchain.obj `if test -f 'rpcblockchain.cpp'; then $(CYGPATH_W) 'rpcblockchain.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcblockchain.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcblockchain.obj `if test -f 'rpc/rpcblockchain.cpp'; then $(CYGPATH_W) 'rpc/rpcblockchain.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcblockchain.cpp'; fi`
 
-libion_server_a-rpcmining.o: rpcmining.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcmining.o -MD -MP -MF $(DEPDIR)/libion_server_a-rpcmining.Tpo -c -o libion_server_a-rpcmining.o `test -f 'rpcmining.cpp' || echo '$(srcdir)/'`rpcmining.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcmining.Tpo $(DEPDIR)/libion_server_a-rpcmining.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcmining.cpp' object='libion_server_a-rpcmining.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcmining.o: rpc/rpcmining.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcmining.o -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcmining.Tpo -c -o rpc/libion_server_a-rpcmining.o `test -f 'rpc/rpcmining.cpp' || echo '$(srcdir)/'`rpc/rpcmining.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcmining.Tpo rpc/$(DEPDIR)/libion_server_a-rpcmining.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcmining.cpp' object='rpc/libion_server_a-rpcmining.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcmining.o `test -f 'rpcmining.cpp' || echo '$(srcdir)/'`rpcmining.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcmining.o `test -f 'rpc/rpcmining.cpp' || echo '$(srcdir)/'`rpc/rpcmining.cpp
 
-libion_server_a-rpcmining.obj: rpcmining.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcmining.obj -MD -MP -MF $(DEPDIR)/libion_server_a-rpcmining.Tpo -c -o libion_server_a-rpcmining.obj `if test -f 'rpcmining.cpp'; then $(CYGPATH_W) 'rpcmining.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcmining.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcmining.Tpo $(DEPDIR)/libion_server_a-rpcmining.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcmining.cpp' object='libion_server_a-rpcmining.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcmining.obj: rpc/rpcmining.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcmining.obj -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcmining.Tpo -c -o rpc/libion_server_a-rpcmining.obj `if test -f 'rpc/rpcmining.cpp'; then $(CYGPATH_W) 'rpc/rpcmining.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcmining.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcmining.Tpo rpc/$(DEPDIR)/libion_server_a-rpcmining.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcmining.cpp' object='rpc/libion_server_a-rpcmining.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcmining.obj `if test -f 'rpcmining.cpp'; then $(CYGPATH_W) 'rpcmining.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcmining.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcmining.obj `if test -f 'rpc/rpcmining.cpp'; then $(CYGPATH_W) 'rpc/rpcmining.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcmining.cpp'; fi`
 
-libion_server_a-rpcmisc.o: rpcmisc.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcmisc.o -MD -MP -MF $(DEPDIR)/libion_server_a-rpcmisc.Tpo -c -o libion_server_a-rpcmisc.o `test -f 'rpcmisc.cpp' || echo '$(srcdir)/'`rpcmisc.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcmisc.Tpo $(DEPDIR)/libion_server_a-rpcmisc.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcmisc.cpp' object='libion_server_a-rpcmisc.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcmisc.o: rpc/rpcmisc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcmisc.o -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcmisc.Tpo -c -o rpc/libion_server_a-rpcmisc.o `test -f 'rpc/rpcmisc.cpp' || echo '$(srcdir)/'`rpc/rpcmisc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcmisc.Tpo rpc/$(DEPDIR)/libion_server_a-rpcmisc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcmisc.cpp' object='rpc/libion_server_a-rpcmisc.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcmisc.o `test -f 'rpcmisc.cpp' || echo '$(srcdir)/'`rpcmisc.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcmisc.o `test -f 'rpc/rpcmisc.cpp' || echo '$(srcdir)/'`rpc/rpcmisc.cpp
 
-libion_server_a-rpcmisc.obj: rpcmisc.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcmisc.obj -MD -MP -MF $(DEPDIR)/libion_server_a-rpcmisc.Tpo -c -o libion_server_a-rpcmisc.obj `if test -f 'rpcmisc.cpp'; then $(CYGPATH_W) 'rpcmisc.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcmisc.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcmisc.Tpo $(DEPDIR)/libion_server_a-rpcmisc.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcmisc.cpp' object='libion_server_a-rpcmisc.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcmisc.obj: rpc/rpcmisc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcmisc.obj -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcmisc.Tpo -c -o rpc/libion_server_a-rpcmisc.obj `if test -f 'rpc/rpcmisc.cpp'; then $(CYGPATH_W) 'rpc/rpcmisc.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcmisc.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcmisc.Tpo rpc/$(DEPDIR)/libion_server_a-rpcmisc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcmisc.cpp' object='rpc/libion_server_a-rpcmisc.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcmisc.obj `if test -f 'rpcmisc.cpp'; then $(CYGPATH_W) 'rpcmisc.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcmisc.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcmisc.obj `if test -f 'rpc/rpcmisc.cpp'; then $(CYGPATH_W) 'rpc/rpcmisc.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcmisc.cpp'; fi`
 
-libion_server_a-rpcnet.o: rpcnet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcnet.o -MD -MP -MF $(DEPDIR)/libion_server_a-rpcnet.Tpo -c -o libion_server_a-rpcnet.o `test -f 'rpcnet.cpp' || echo '$(srcdir)/'`rpcnet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcnet.Tpo $(DEPDIR)/libion_server_a-rpcnet.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcnet.cpp' object='libion_server_a-rpcnet.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcnet.o: rpc/rpcnet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcnet.o -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcnet.Tpo -c -o rpc/libion_server_a-rpcnet.o `test -f 'rpc/rpcnet.cpp' || echo '$(srcdir)/'`rpc/rpcnet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcnet.Tpo rpc/$(DEPDIR)/libion_server_a-rpcnet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcnet.cpp' object='rpc/libion_server_a-rpcnet.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcnet.o `test -f 'rpcnet.cpp' || echo '$(srcdir)/'`rpcnet.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcnet.o `test -f 'rpc/rpcnet.cpp' || echo '$(srcdir)/'`rpc/rpcnet.cpp
 
-libion_server_a-rpcnet.obj: rpcnet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcnet.obj -MD -MP -MF $(DEPDIR)/libion_server_a-rpcnet.Tpo -c -o libion_server_a-rpcnet.obj `if test -f 'rpcnet.cpp'; then $(CYGPATH_W) 'rpcnet.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcnet.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcnet.Tpo $(DEPDIR)/libion_server_a-rpcnet.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcnet.cpp' object='libion_server_a-rpcnet.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcnet.obj: rpc/rpcnet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcnet.obj -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcnet.Tpo -c -o rpc/libion_server_a-rpcnet.obj `if test -f 'rpc/rpcnet.cpp'; then $(CYGPATH_W) 'rpc/rpcnet.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcnet.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcnet.Tpo rpc/$(DEPDIR)/libion_server_a-rpcnet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcnet.cpp' object='rpc/libion_server_a-rpcnet.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcnet.obj `if test -f 'rpcnet.cpp'; then $(CYGPATH_W) 'rpcnet.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcnet.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcnet.obj `if test -f 'rpc/rpcnet.cpp'; then $(CYGPATH_W) 'rpc/rpcnet.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcnet.cpp'; fi`
 
-libion_server_a-rpcrawtransaction.o: rpcrawtransaction.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcrawtransaction.o -MD -MP -MF $(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo -c -o libion_server_a-rpcrawtransaction.o `test -f 'rpcrawtransaction.cpp' || echo '$(srcdir)/'`rpcrawtransaction.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo $(DEPDIR)/libion_server_a-rpcrawtransaction.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcrawtransaction.cpp' object='libion_server_a-rpcrawtransaction.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcrawtransaction.o: rpc/rpcrawtransaction.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcrawtransaction.o -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo -c -o rpc/libion_server_a-rpcrawtransaction.o `test -f 'rpc/rpcrawtransaction.cpp' || echo '$(srcdir)/'`rpc/rpcrawtransaction.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcrawtransaction.cpp' object='rpc/libion_server_a-rpcrawtransaction.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcrawtransaction.o `test -f 'rpcrawtransaction.cpp' || echo '$(srcdir)/'`rpcrawtransaction.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcrawtransaction.o `test -f 'rpc/rpcrawtransaction.cpp' || echo '$(srcdir)/'`rpc/rpcrawtransaction.cpp
 
-libion_server_a-rpcrawtransaction.obj: rpcrawtransaction.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcrawtransaction.obj -MD -MP -MF $(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo -c -o libion_server_a-rpcrawtransaction.obj `if test -f 'rpcrawtransaction.cpp'; then $(CYGPATH_W) 'rpcrawtransaction.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcrawtransaction.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo $(DEPDIR)/libion_server_a-rpcrawtransaction.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcrawtransaction.cpp' object='libion_server_a-rpcrawtransaction.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcrawtransaction.obj: rpc/rpcrawtransaction.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcrawtransaction.obj -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo -c -o rpc/libion_server_a-rpcrawtransaction.obj `if test -f 'rpc/rpcrawtransaction.cpp'; then $(CYGPATH_W) 'rpc/rpcrawtransaction.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcrawtransaction.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Tpo rpc/$(DEPDIR)/libion_server_a-rpcrawtransaction.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcrawtransaction.cpp' object='rpc/libion_server_a-rpcrawtransaction.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcrawtransaction.obj `if test -f 'rpcrawtransaction.cpp'; then $(CYGPATH_W) 'rpcrawtransaction.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcrawtransaction.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcrawtransaction.obj `if test -f 'rpc/rpcrawtransaction.cpp'; then $(CYGPATH_W) 'rpc/rpcrawtransaction.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcrawtransaction.cpp'; fi`
 
-libion_server_a-rpcserver.o: rpcserver.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcserver.o -MD -MP -MF $(DEPDIR)/libion_server_a-rpcserver.Tpo -c -o libion_server_a-rpcserver.o `test -f 'rpcserver.cpp' || echo '$(srcdir)/'`rpcserver.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcserver.Tpo $(DEPDIR)/libion_server_a-rpcserver.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcserver.cpp' object='libion_server_a-rpcserver.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcserver.o: rpc/rpcserver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcserver.o -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcserver.Tpo -c -o rpc/libion_server_a-rpcserver.o `test -f 'rpc/rpcserver.cpp' || echo '$(srcdir)/'`rpc/rpcserver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcserver.Tpo rpc/$(DEPDIR)/libion_server_a-rpcserver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcserver.cpp' object='rpc/libion_server_a-rpcserver.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcserver.o `test -f 'rpcserver.cpp' || echo '$(srcdir)/'`rpcserver.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcserver.o `test -f 'rpc/rpcserver.cpp' || echo '$(srcdir)/'`rpc/rpcserver.cpp
 
-libion_server_a-rpcserver.obj: rpcserver.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-rpcserver.obj -MD -MP -MF $(DEPDIR)/libion_server_a-rpcserver.Tpo -c -o libion_server_a-rpcserver.obj `if test -f 'rpcserver.cpp'; then $(CYGPATH_W) 'rpcserver.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcserver.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_server_a-rpcserver.Tpo $(DEPDIR)/libion_server_a-rpcserver.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcserver.cpp' object='libion_server_a-rpcserver.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_server_a-rpcserver.obj: rpc/rpcserver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_server_a-rpcserver.obj -MD -MP -MF rpc/$(DEPDIR)/libion_server_a-rpcserver.Tpo -c -o rpc/libion_server_a-rpcserver.obj `if test -f 'rpc/rpcserver.cpp'; then $(CYGPATH_W) 'rpc/rpcserver.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcserver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_server_a-rpcserver.Tpo rpc/$(DEPDIR)/libion_server_a-rpcserver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcserver.cpp' object='rpc/libion_server_a-rpcserver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_server_a-rpcserver.obj `if test -f 'rpcserver.cpp'; then $(CYGPATH_W) 'rpcserver.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcserver.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_server_a-rpcserver.obj `if test -f 'rpc/rpcserver.cpp'; then $(CYGPATH_W) 'rpc/rpcserver.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcserver.cpp'; fi`
 
 libion_server_a-timedata.o: timedata.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_server_a_CPPFLAGS) $(CPPFLAGS) $(libion_server_a_CXXFLAGS) $(CXXFLAGS) -MT libion_server_a-timedata.o -MD -MP -MF $(DEPDIR)/libion_server_a-timedata.Tpo -c -o libion_server_a-timedata.o `test -f 'timedata.cpp' || echo '$(srcdir)/'`timedata.cpp
@@ -4140,19 +4163,19 @@ compat/libion_util_a-glibcxx_sanity.obj: compat/glibcxx_sanity.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o compat/libion_util_a-glibcxx_sanity.obj `if test -f 'compat/glibcxx_sanity.cpp'; then $(CYGPATH_W) 'compat/glibcxx_sanity.cpp'; else $(CYGPATH_W) '$(srcdir)/compat/glibcxx_sanity.cpp'; fi`
 
-libion_util_a-rpcprotocol.o: rpcprotocol.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-rpcprotocol.o -MD -MP -MF $(DEPDIR)/libion_util_a-rpcprotocol.Tpo -c -o libion_util_a-rpcprotocol.o `test -f 'rpcprotocol.cpp' || echo '$(srcdir)/'`rpcprotocol.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_util_a-rpcprotocol.Tpo $(DEPDIR)/libion_util_a-rpcprotocol.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcprotocol.cpp' object='libion_util_a-rpcprotocol.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_util_a-rpcprotocol.o: rpc/rpcprotocol.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_util_a-rpcprotocol.o -MD -MP -MF rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Tpo -c -o rpc/libion_util_a-rpcprotocol.o `test -f 'rpc/rpcprotocol.cpp' || echo '$(srcdir)/'`rpc/rpcprotocol.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Tpo rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcprotocol.cpp' object='rpc/libion_util_a-rpcprotocol.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_util_a-rpcprotocol.o `test -f 'rpcprotocol.cpp' || echo '$(srcdir)/'`rpcprotocol.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_util_a-rpcprotocol.o `test -f 'rpc/rpcprotocol.cpp' || echo '$(srcdir)/'`rpc/rpcprotocol.cpp
 
-libion_util_a-rpcprotocol.obj: rpcprotocol.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-rpcprotocol.obj -MD -MP -MF $(DEPDIR)/libion_util_a-rpcprotocol.Tpo -c -o libion_util_a-rpcprotocol.obj `if test -f 'rpcprotocol.cpp'; then $(CYGPATH_W) 'rpcprotocol.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcprotocol.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_util_a-rpcprotocol.Tpo $(DEPDIR)/libion_util_a-rpcprotocol.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcprotocol.cpp' object='libion_util_a-rpcprotocol.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_util_a-rpcprotocol.obj: rpc/rpcprotocol.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_util_a-rpcprotocol.obj -MD -MP -MF rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Tpo -c -o rpc/libion_util_a-rpcprotocol.obj `if test -f 'rpc/rpcprotocol.cpp'; then $(CYGPATH_W) 'rpc/rpcprotocol.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcprotocol.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Tpo rpc/$(DEPDIR)/libion_util_a-rpcprotocol.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcprotocol.cpp' object='rpc/libion_util_a-rpcprotocol.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_util_a-rpcprotocol.obj `if test -f 'rpcprotocol.cpp'; then $(CYGPATH_W) 'rpcprotocol.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcprotocol.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_util_a-rpcprotocol.obj `if test -f 'rpc/rpcprotocol.cpp'; then $(CYGPATH_W) 'rpc/rpcprotocol.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcprotocol.cpp'; fi`
 
 libion_util_a-sync.o: sync.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_util_a_CPPFLAGS) $(CPPFLAGS) $(libion_util_a_CXXFLAGS) $(CXXFLAGS) -MT libion_util_a-sync.o -MD -MP -MF $(DEPDIR)/libion_util_a-sync.Tpo -c -o libion_util_a-sync.o `test -f 'sync.cpp' || echo '$(srcdir)/'`sync.cpp
@@ -4238,19 +4261,19 @@ libion_wallet_a-darksend-relay.obj: darksend-relay.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-darksend-relay.obj `if test -f 'darksend-relay.cpp'; then $(CYGPATH_W) 'darksend-relay.cpp'; else $(CYGPATH_W) '$(srcdir)/darksend-relay.cpp'; fi`
 
-libion_wallet_a-db.o: db.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-db.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-db.Tpo -c -o libion_wallet_a-db.o `test -f 'db.cpp' || echo '$(srcdir)/'`db.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-db.Tpo $(DEPDIR)/libion_wallet_a-db.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='db.cpp' object='libion_wallet_a-db.o' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-db.o: wallet/db.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-db.o -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-db.Tpo -c -o wallet/libion_wallet_a-db.o `test -f 'wallet/db.cpp' || echo '$(srcdir)/'`wallet/db.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-db.Tpo wallet/$(DEPDIR)/libion_wallet_a-db.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/db.cpp' object='wallet/libion_wallet_a-db.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-db.o `test -f 'db.cpp' || echo '$(srcdir)/'`db.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-db.o `test -f 'wallet/db.cpp' || echo '$(srcdir)/'`wallet/db.cpp
 
-libion_wallet_a-db.obj: db.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-db.obj -MD -MP -MF $(DEPDIR)/libion_wallet_a-db.Tpo -c -o libion_wallet_a-db.obj `if test -f 'db.cpp'; then $(CYGPATH_W) 'db.cpp'; else $(CYGPATH_W) '$(srcdir)/db.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-db.Tpo $(DEPDIR)/libion_wallet_a-db.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='db.cpp' object='libion_wallet_a-db.obj' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-db.obj: wallet/db.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-db.obj -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-db.Tpo -c -o wallet/libion_wallet_a-db.obj `if test -f 'wallet/db.cpp'; then $(CYGPATH_W) 'wallet/db.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/db.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-db.Tpo wallet/$(DEPDIR)/libion_wallet_a-db.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/db.cpp' object='wallet/libion_wallet_a-db.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-db.obj `if test -f 'db.cpp'; then $(CYGPATH_W) 'db.cpp'; else $(CYGPATH_W) '$(srcdir)/db.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-db.obj `if test -f 'wallet/db.cpp'; then $(CYGPATH_W) 'wallet/db.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/db.cpp'; fi`
 
 libion_wallet_a-crypter.o: crypter.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-crypter.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-crypter.Tpo -c -o libion_wallet_a-crypter.o `test -f 'crypter.cpp' || echo '$(srcdir)/'`crypter.cpp
@@ -4350,33 +4373,33 @@ libion_wallet_a-masternode-pos.obj: masternode-pos.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-masternode-pos.obj `if test -f 'masternode-pos.cpp'; then $(CYGPATH_W) 'masternode-pos.cpp'; else $(CYGPATH_W) '$(srcdir)/masternode-pos.cpp'; fi`
 
-libion_wallet_a-rpcdump.o: rpcdump.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-rpcdump.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-rpcdump.Tpo -c -o libion_wallet_a-rpcdump.o `test -f 'rpcdump.cpp' || echo '$(srcdir)/'`rpcdump.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-rpcdump.Tpo $(DEPDIR)/libion_wallet_a-rpcdump.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcdump.cpp' object='libion_wallet_a-rpcdump.o' libtool=no @AMDEPBACKSLASH@
+rpc/libion_wallet_a-rpcdump.o: rpc/rpcdump.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_wallet_a-rpcdump.o -MD -MP -MF rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Tpo -c -o rpc/libion_wallet_a-rpcdump.o `test -f 'rpc/rpcdump.cpp' || echo '$(srcdir)/'`rpc/rpcdump.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Tpo rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcdump.cpp' object='rpc/libion_wallet_a-rpcdump.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-rpcdump.o `test -f 'rpcdump.cpp' || echo '$(srcdir)/'`rpcdump.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_wallet_a-rpcdump.o `test -f 'rpc/rpcdump.cpp' || echo '$(srcdir)/'`rpc/rpcdump.cpp
 
-libion_wallet_a-rpcdump.obj: rpcdump.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-rpcdump.obj -MD -MP -MF $(DEPDIR)/libion_wallet_a-rpcdump.Tpo -c -o libion_wallet_a-rpcdump.obj `if test -f 'rpcdump.cpp'; then $(CYGPATH_W) 'rpcdump.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcdump.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-rpcdump.Tpo $(DEPDIR)/libion_wallet_a-rpcdump.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcdump.cpp' object='libion_wallet_a-rpcdump.obj' libtool=no @AMDEPBACKSLASH@
+rpc/libion_wallet_a-rpcdump.obj: rpc/rpcdump.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT rpc/libion_wallet_a-rpcdump.obj -MD -MP -MF rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Tpo -c -o rpc/libion_wallet_a-rpcdump.obj `if test -f 'rpc/rpcdump.cpp'; then $(CYGPATH_W) 'rpc/rpcdump.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcdump.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Tpo rpc/$(DEPDIR)/libion_wallet_a-rpcdump.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpc/rpcdump.cpp' object='rpc/libion_wallet_a-rpcdump.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-rpcdump.obj `if test -f 'rpcdump.cpp'; then $(CYGPATH_W) 'rpcdump.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcdump.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o rpc/libion_wallet_a-rpcdump.obj `if test -f 'rpc/rpcdump.cpp'; then $(CYGPATH_W) 'rpc/rpcdump.cpp'; else $(CYGPATH_W) '$(srcdir)/rpc/rpcdump.cpp'; fi`
 
-libion_wallet_a-rpcwallet.o: rpcwallet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-rpcwallet.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-rpcwallet.Tpo -c -o libion_wallet_a-rpcwallet.o `test -f 'rpcwallet.cpp' || echo '$(srcdir)/'`rpcwallet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-rpcwallet.Tpo $(DEPDIR)/libion_wallet_a-rpcwallet.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcwallet.cpp' object='libion_wallet_a-rpcwallet.o' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-rpcwallet.o: wallet/rpcwallet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-rpcwallet.o -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Tpo -c -o wallet/libion_wallet_a-rpcwallet.o `test -f 'wallet/rpcwallet.cpp' || echo '$(srcdir)/'`wallet/rpcwallet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Tpo wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/rpcwallet.cpp' object='wallet/libion_wallet_a-rpcwallet.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-rpcwallet.o `test -f 'rpcwallet.cpp' || echo '$(srcdir)/'`rpcwallet.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-rpcwallet.o `test -f 'wallet/rpcwallet.cpp' || echo '$(srcdir)/'`wallet/rpcwallet.cpp
 
-libion_wallet_a-rpcwallet.obj: rpcwallet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-rpcwallet.obj -MD -MP -MF $(DEPDIR)/libion_wallet_a-rpcwallet.Tpo -c -o libion_wallet_a-rpcwallet.obj `if test -f 'rpcwallet.cpp'; then $(CYGPATH_W) 'rpcwallet.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcwallet.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-rpcwallet.Tpo $(DEPDIR)/libion_wallet_a-rpcwallet.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rpcwallet.cpp' object='libion_wallet_a-rpcwallet.obj' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-rpcwallet.obj: wallet/rpcwallet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-rpcwallet.obj -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Tpo -c -o wallet/libion_wallet_a-rpcwallet.obj `if test -f 'wallet/rpcwallet.cpp'; then $(CYGPATH_W) 'wallet/rpcwallet.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/rpcwallet.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Tpo wallet/$(DEPDIR)/libion_wallet_a-rpcwallet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/rpcwallet.cpp' object='wallet/libion_wallet_a-rpcwallet.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-rpcwallet.obj `if test -f 'rpcwallet.cpp'; then $(CYGPATH_W) 'rpcwallet.cpp'; else $(CYGPATH_W) '$(srcdir)/rpcwallet.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-rpcwallet.obj `if test -f 'wallet/rpcwallet.cpp'; then $(CYGPATH_W) 'wallet/rpcwallet.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/rpcwallet.cpp'; fi`
 
 libion_wallet_a-kernel.o: kernel.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-kernel.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-kernel.Tpo -c -o libion_wallet_a-kernel.o `test -f 'kernel.cpp' || echo '$(srcdir)/'`kernel.cpp
@@ -4392,33 +4415,33 @@ libion_wallet_a-kernel.obj: kernel.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-kernel.obj `if test -f 'kernel.cpp'; then $(CYGPATH_W) 'kernel.cpp'; else $(CYGPATH_W) '$(srcdir)/kernel.cpp'; fi`
 
-libion_wallet_a-wallet.o: wallet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-wallet.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-wallet.Tpo -c -o libion_wallet_a-wallet.o `test -f 'wallet.cpp' || echo '$(srcdir)/'`wallet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-wallet.Tpo $(DEPDIR)/libion_wallet_a-wallet.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet.cpp' object='libion_wallet_a-wallet.o' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-wallet.o: wallet/wallet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-wallet.o -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-wallet.Tpo -c -o wallet/libion_wallet_a-wallet.o `test -f 'wallet/wallet.cpp' || echo '$(srcdir)/'`wallet/wallet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-wallet.Tpo wallet/$(DEPDIR)/libion_wallet_a-wallet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/wallet.cpp' object='wallet/libion_wallet_a-wallet.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-wallet.o `test -f 'wallet.cpp' || echo '$(srcdir)/'`wallet.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-wallet.o `test -f 'wallet/wallet.cpp' || echo '$(srcdir)/'`wallet/wallet.cpp
 
-libion_wallet_a-wallet.obj: wallet.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-wallet.obj -MD -MP -MF $(DEPDIR)/libion_wallet_a-wallet.Tpo -c -o libion_wallet_a-wallet.obj `if test -f 'wallet.cpp'; then $(CYGPATH_W) 'wallet.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-wallet.Tpo $(DEPDIR)/libion_wallet_a-wallet.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet.cpp' object='libion_wallet_a-wallet.obj' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-wallet.obj: wallet/wallet.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-wallet.obj -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-wallet.Tpo -c -o wallet/libion_wallet_a-wallet.obj `if test -f 'wallet/wallet.cpp'; then $(CYGPATH_W) 'wallet/wallet.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/wallet.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-wallet.Tpo wallet/$(DEPDIR)/libion_wallet_a-wallet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/wallet.cpp' object='wallet/libion_wallet_a-wallet.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-wallet.obj `if test -f 'wallet.cpp'; then $(CYGPATH_W) 'wallet.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-wallet.obj `if test -f 'wallet/wallet.cpp'; then $(CYGPATH_W) 'wallet/wallet.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/wallet.cpp'; fi`
 
-libion_wallet_a-walletdb.o: walletdb.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-walletdb.o -MD -MP -MF $(DEPDIR)/libion_wallet_a-walletdb.Tpo -c -o libion_wallet_a-walletdb.o `test -f 'walletdb.cpp' || echo '$(srcdir)/'`walletdb.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-walletdb.Tpo $(DEPDIR)/libion_wallet_a-walletdb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='walletdb.cpp' object='libion_wallet_a-walletdb.o' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-walletdb.o: wallet/walletdb.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-walletdb.o -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-walletdb.Tpo -c -o wallet/libion_wallet_a-walletdb.o `test -f 'wallet/walletdb.cpp' || echo '$(srcdir)/'`wallet/walletdb.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-walletdb.Tpo wallet/$(DEPDIR)/libion_wallet_a-walletdb.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/walletdb.cpp' object='wallet/libion_wallet_a-walletdb.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-walletdb.o `test -f 'walletdb.cpp' || echo '$(srcdir)/'`walletdb.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-walletdb.o `test -f 'wallet/walletdb.cpp' || echo '$(srcdir)/'`wallet/walletdb.cpp
 
-libion_wallet_a-walletdb.obj: walletdb.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT libion_wallet_a-walletdb.obj -MD -MP -MF $(DEPDIR)/libion_wallet_a-walletdb.Tpo -c -o libion_wallet_a-walletdb.obj `if test -f 'walletdb.cpp'; then $(CYGPATH_W) 'walletdb.cpp'; else $(CYGPATH_W) '$(srcdir)/walletdb.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libion_wallet_a-walletdb.Tpo $(DEPDIR)/libion_wallet_a-walletdb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='walletdb.cpp' object='libion_wallet_a-walletdb.obj' libtool=no @AMDEPBACKSLASH@
+wallet/libion_wallet_a-walletdb.obj: wallet/walletdb.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -MT wallet/libion_wallet_a-walletdb.obj -MD -MP -MF wallet/$(DEPDIR)/libion_wallet_a-walletdb.Tpo -c -o wallet/libion_wallet_a-walletdb.obj `if test -f 'wallet/walletdb.cpp'; then $(CYGPATH_W) 'wallet/walletdb.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/walletdb.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) wallet/$(DEPDIR)/libion_wallet_a-walletdb.Tpo wallet/$(DEPDIR)/libion_wallet_a-walletdb.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wallet/walletdb.cpp' object='wallet/libion_wallet_a-walletdb.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o libion_wallet_a-walletdb.obj `if test -f 'walletdb.cpp'; then $(CYGPATH_W) 'walletdb.cpp'; else $(CYGPATH_W) '$(srcdir)/walletdb.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libion_wallet_a_CPPFLAGS) $(CPPFLAGS) $(libion_wallet_a_CXXFLAGS) $(CXXFLAGS) -c -o wallet/libion_wallet_a-walletdb.obj `if test -f 'wallet/walletdb.cpp'; then $(CYGPATH_W) 'wallet/walletdb.cpp'; else $(CYGPATH_W) '$(srcdir)/wallet/walletdb.cpp'; fi`
 
 qt/qt_libionqt_a-bitcoin.o: qt/bitcoin.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qt_libionqt_a_CPPFLAGS) $(CPPFLAGS) $(qt_libionqt_a_CXXFLAGS) $(CXXFLAGS) -MT qt/qt_libionqt_a-bitcoin.o -MD -MP -MF qt/$(DEPDIR)/qt_libionqt_a-bitcoin.Tpo -c -o qt/qt_libionqt_a-bitcoin.o `test -f 'qt/bitcoin.cpp' || echo '$(srcdir)/'`qt/bitcoin.cpp
@@ -6481,8 +6504,12 @@ distclean-generic:
 	-rm -f qt/plugins/mrichtexteditor/$(am__dirstamp)
 	-rm -f qt/res/$(DEPDIR)/$(am__dirstamp)
 	-rm -f qt/res/$(am__dirstamp)
+	-rm -f rpc/$(DEPDIR)/$(am__dirstamp)
+	-rm -f rpc/$(am__dirstamp)
 	-rm -f script/$(DEPDIR)/$(am__dirstamp)
 	-rm -f script/$(am__dirstamp)
+	-rm -f wallet/$(DEPDIR)/$(am__dirstamp)
+	-rm -f wallet/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
@@ -6494,7 +6521,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-recursive
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) script/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) rpc/$(DEPDIR) script/$(DEPDIR) wallet/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -6540,7 +6567,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) script/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) leveldb/db/$(DEPDIR) leveldb/helpers/memenv/$(DEPDIR) leveldb/port/$(DEPDIR) leveldb/table/$(DEPDIR) leveldb/util/$(DEPDIR) qt/$(DEPDIR) qt/moc_plugins/mrichtexteditor/$(DEPDIR) qt/plugins/mrichtexteditor/$(DEPDIR) rpc/$(DEPDIR) script/$(DEPDIR) wallet/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

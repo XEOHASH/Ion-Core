@@ -757,52 +757,64 @@ double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSiz
     return dPriorityInputs / nTxSize;
 }
 
-bool CTransaction::CheckTransaction() const
+bool CheckTransaction(const CTransaction& tx) const
 {
     // Basic checks that don't depend on any context
-    if (vin.empty())
-        return DoS(10, error("CTransaction::CheckTransaction() : vin empty"));
-    if (vout.empty())
-        return DoS(10, error("CTransaction::CheckTransaction() : vout empty"));
+    if (tx.vin.empty())
+        return DoS(10, error("CheckTransaction() : vin empty"),
+                         REJECT_INVALID, "bad-txns-vin-empty");
+    if (tx.vout.empty())
+        return DoS(10, error("CheckTransaction() : vout empty"),
+                         REJECT_INVALID, "bad-txns-vout-empty");
     // Size limits
-    if (::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
-        return DoS(100, error("CTransaction::CheckTransaction() : size limits failed"));
+    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
+        return DoS(100, error("CheckTransaction() : size limits failed"),
+                         REJECT_INVALID, "bad-txns-oversize");
+
+    //  Checks tx time in order to catch time drifting attacks
+    if (tx.nTime > GetAdjustedTime() + nMaxClockDrift)
+        return DoS(10, error("CTransaction::CheckTransaction() : timestamp is too far into the future"));
 
     // Check for negative or overflow output values
-    int64_t nValueOut = 0;
-    for (unsigned int i = 0; i < vout.size(); i++)
+    CAmount nValueOut = 0;
+    BOOST_FOREACH(const CTxOut& txout, tx.vout)
     {
-        const CTxOut& txout = vout[i];
-        if (txout.IsEmpty() && !IsCoinBase() && !IsCoinStake())
+        if (txout.IsEmpty() && (!tx.IsCoinBase()) && (!tx.IsCoinStake()))
             return DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
+        // ppcoin: enforce minimum output amount
         if (txout.nValue < 0)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue negative"));
         if (txout.nValue > MAX_MONEY)
-            return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue too high"));
+            return DoS(100, error("CheckTransaction() : txout.nValue too high"),
+                             REJECT_INVALID, "bad-txns-vout-toolarge");
         nValueOut += txout.nValue;
         if (!MoneyRange(nValueOut))
-            return DoS(100, error("CTransaction::CheckTransaction() : txout total out of range"));
+            return DoS(100, error("CheckTransaction() : txout total out of range"),
+                             REJECT_INVALID, "bad-txns-txouttotal-toolarge");
     }
 
     // Check for duplicate inputs
     set<COutPoint> vInOutPoints;
-    BOOST_FOREACH(const CTxIn& txin, vin)
+    BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         if (vInOutPoints.count(txin.prevout))
-            return false;
+            return DoS(100, error("CheckTransaction() : duplicate inputs"),
+                             REJECT_INVALID, "bad-txns-inputs-duplicate");
         vInOutPoints.insert(txin.prevout);
     }
 
-    if (IsCoinBase())
+    if (tx.IsCoinBase())
     {
-        if (vin[0].scriptSig.size() < 2 || vin[0].scriptSig.size() > 100)
-            return DoS(100, error("CTransaction::CheckTransaction() : coinbase script size is invalid"));
+        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+            return DoS(100, error("CheckTransaction() : coinbase script size"),
+                             REJECT_INVALID, "bad-cb-length");
     }
-    else
+	else
     {
-        BOOST_FOREACH(const CTxIn& txin, vin)
+        BOOST_FOREACH(const CTxIn& txin, tx.vin)
             if (txin.prevout.IsNull())
-                return DoS(10, error("CTransaction::CheckTransaction() : prevout is null"));
+                return DoS(10, error("CheckTransaction() : prevout is null"),
+                                 REJECT_INVALID, "bad-txns-prevout-null");
     }
 
     return true;
@@ -850,7 +862,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CTransaction &tx, bool fLimitFree,
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!tx.CheckTransaction())
+    if (!CheckTransaction(tx))
         return error("AcceptToMemoryPool : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -916,7 +928,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CTransaction &tx, bool fLimitFree,
         MapPrevTx mapInputs;
         map<uint256, CTxIndex> mapUnused;
         bool fInvalid = false;
-        if (!tx.FetchInputs(txdb, mapUnused, false, false, mapInputs, fInvalid))
+        if (!FetchInputs(tx, txdb, mapUnused, false, false, mapInputs, fInvalid))
         {
             if (fInvalid)
                 return error("AcceptToMemoryPool : FetchInputs found invalid tx %s", hash.ToString());
@@ -985,7 +997,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CTransaction &tx, bool fLimitFree,
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.ConnectInputs(txdb, mapInputs, mapUnused, CDiskTxPos(1,1,1), pindexBest, false, false, STANDARD_SCRIPT_VERIFY_FLAGS))
+        if (!ConnectInputs(tx, txdb, mapInputs, mapUnused, CDiskTxPos(1,1,1), pindexBest, false, false, STANDARD_SCRIPT_VERIFY_FLAGS))
         {
             return error("AcceptToMemoryPool : ConnectInputs failed %s", hash.ToString());
         }
@@ -999,7 +1011,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CTransaction &tx, bool fLimitFree,
         // There is a similar check in CreateNewBlock() to prevent creating
         // invalid blocks, however allowing such transactions into the mempool
         // can be exploited as a DoS attack.
-        if (!tx.ConnectInputs(txdb, mapInputs, mapUnused, CDiskTxPos(1,1,1), pindexBest, false, false, MANDATORY_SCRIPT_VERIFY_FLAGS))
+        if (!ConnectInputs(tx, txdb, mapInputs, mapUnused, CDiskTxPos(1,1,1), pindexBest, false, false, MANDATORY_SCRIPT_VERIFY_FLAGS))
         {
             return error("AcceptToMemoryPool: : BUG! PLEASE REPORT THIS! ConnectInputs failed against MANDATORY but not STANDARD flags %s", hash.ToString());
         }
@@ -1028,7 +1040,7 @@ bool AcceptableInputs(CTxMemPool& pool, const CTransaction &txo, bool fLimitFree
     CTransaction tx(txo);
     string reason;
 
-    if (!tx.CheckTransaction())
+    if (!CheckTransaction(tx))
         return error("AcceptableInputs : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1078,7 +1090,7 @@ bool AcceptableInputs(CTxMemPool& pool, const CTransaction &txo, bool fLimitFree
         MapPrevTx mapInputs;
         map<uint256, CTxIndex> mapUnused;
         bool fInvalid = false;
-        if (!tx.FetchInputs(txdb, mapUnused, false, false, mapInputs, fInvalid))
+        if (!FetchInputs(tx, txdb, mapUnused, false, false, mapInputs, fInvalid))
         {
             if (fInvalid)
                 return error("AcceptableInputs : FetchInputs found invalid tx %s", hash.ToString());
@@ -1146,7 +1158,7 @@ bool AcceptableInputs(CTxMemPool& pool, const CTransaction &txo, bool fLimitFree
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.ConnectInputs(txdb, mapInputs, mapUnused, CDiskTxPos(1,1,1), pindexBest, true, false, STANDARD_SCRIPT_VERIFY_FLAGS, false))
+        if (!ConnectInputs(tx, txdb, mapInputs, mapUnused, CDiskTxPos(1,1,1), pindexBest, true, false, STANDARD_SCRIPT_VERIFY_FLAGS, false))
         {
             return error("AcceptableInputs : ConnectInputs failed %s", hash.ToString());
         }
@@ -1822,7 +1834,7 @@ bool CTransaction::DisconnectInputs(CTxDB& txdb)
 }
 
 
-bool CTransaction::FetchInputs(CTxDB& txdb, const map<uint256, CTxIndex>& mapTestPool,
+bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const map<uint256, CTxIndex>& mapTestPool,
                                bool fBlock, bool fMiner, MapPrevTx& inputsRet, bool& fInvalid)
 {
     // FetchInputs can return false either because we just haven't seen some inputs
@@ -1831,12 +1843,12 @@ bool CTransaction::FetchInputs(CTxDB& txdb, const map<uint256, CTxIndex>& mapTes
     // be dropped).  If tx is definitely invalid, fInvalid will be set to true.
     fInvalid = false;
 
-    if (IsCoinBase())
+    if (tx.IsCoinBase())
         return true; // Coinbase transactions have no inputs to fetch.
 
-    for (unsigned int i = 0; i < vin.size(); i++)
+    for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        COutPoint prevout = vin[i].prevout;
+        COutPoint prevout = tx.vin[i].prevout;
         if (inputsRet.count(prevout.hash))
             continue; // Got it already
 
@@ -1920,20 +1932,20 @@ int64_t CTransaction::GetValueIn(const MapPrevTx& inputs) const
 
 }
 
-bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs, map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
+bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs, map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
     const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, unsigned int flags, bool fValidateSig)
 {
     // Take over previous transactions' spent pointers
     // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
     // fMiner is true when called from the internal bitcoin miner
     // ... both are false when called from CTransaction::AcceptToMemoryPool
-    if (!IsCoinBase())
+    if (!tx.IsCoinBase())
     {
         int64_t nValueIn = 0;
         int64_t nFees = 0;
-        for (unsigned int i = 0; i < vin.size(); i++)
+        for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
-            COutPoint prevout = vin[i].prevout;
+            COutPoint prevout = tx.vin[i].prevout;
             assert(inputs.count(prevout.hash) > 0);
             CTxIndex& txindex = inputs[prevout.hash].first;
             CTransaction& txPrev = inputs[prevout.hash].second;
@@ -1962,9 +1974,9 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs, map<uint256, CTx
         // The first loop above does all the inexpensive checks.
         // Only if ALL inputs pass do we perform expensive ECDSA signature checks.
         // Helps prevent CPU exhaustion attacks.
-        for (unsigned int i = 0; i < vin.size(); i++)
+        for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
-            COutPoint prevout = vin[i].prevout;
+            COutPoint prevout = tx.vin[i].prevout;
             assert(inputs.count(prevout.hash) > 0);
             CTxIndex& txindex = inputs[prevout.hash].first;
             CTransaction& txPrev = inputs[prevout.hash].second;
@@ -1983,7 +1995,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs, map<uint256, CTx
                 if (!(fBlock && !IsInitialBlockDownload()))
                 {
                     // Verify signature
-                    if (!VerifySignature(txPrev, *this, i, flags, 0))
+                    if (!VerifySignature(txPrev, tx, i, flags, 0))
                     {
                         if (flags & STANDARD_NOT_MANDATORY_VERIFY_FLAGS) {
                             // Check whether the failure was caused by a
@@ -1992,7 +2004,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs, map<uint256, CTx
                             // if so, don't trigger DoS protection to
                             // avoid splitting the network between upgraded and
                             // non-upgraded nodes.
-                            if (VerifySignature(txPrev, *this, i, flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, 0))
+                            if (VerifySignature(txPrev, tx, i, flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, 0))
                                 return error("ConnectInputs() : %s non-mandatory VerifySignature failed", GetHash().ToString());
                         }
                         // Failures of other flags indicate a transaction that is
@@ -2017,7 +2029,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs, map<uint256, CTx
             }
         }
 
-        if (!IsCoinStake())
+        if (!tx.IsCoinStake())
         {
             if (nValueIn < GetValueOut())
                 return DoS(100, error("ConnectInputs() : %s value in < value out", GetHash().ToString()));
@@ -2131,7 +2143,7 @@ void CBlock::RebuildAddressIndex(CTxDB& txdb)
             MapPrevTx mapInputs;
             map<uint256, CTxIndex> mapQueuedChangesT;
             bool fInvalid;
-            if (!tx.FetchInputs(txdb, mapQueuedChangesT, true, false, mapInputs, fInvalid))
+            if (!FetchInputs(tx, txdb, mapQueuedChangesT, true, false, mapInputs, fInvalid))
                 return;
 
             MapPrevTx::const_iterator mi;
@@ -2210,7 +2222,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
         else
         {
             bool fInvalid;
-            if (!tx.FetchInputs(txdb, mapQueuedChanges, true, false, mapInputs, fInvalid))
+            if (!FetchInputs(tx, txdb, mapQueuedChanges, true, false, mapInputs, fInvalid))
                 return false;
 
             // Add in sigops done by pay-to-script-hash inputs;
@@ -2230,7 +2242,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
                 nStakeReward = nTxValueOut - nTxValueIn;
 
 
-            if (!tx.ConnectInputs(txdb, mapInputs, mapQueuedChanges, posThisTx, pindex, true, false, flags))
+            if (!ConnectInputs(tx, txdb, mapInputs, mapQueuedChanges, posThisTx, pindex, true, false, flags))
                 return false;
         }
 
@@ -2287,7 +2299,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
                 MapPrevTx mapInputs;
                 map<uint256, CTxIndex> mapQueuedChangesT;
                 bool fInvalid;
-                if (!tx.FetchInputs(txdb, mapQueuedChangesT, true, false, mapInputs, fInvalid))
+                if (!FetchInputs(tx, txdb, mapQueuedChangesT, true, false, mapInputs, fInvalid))
                     return false;
 
                 MapPrevTx::const_iterator mi;
@@ -2841,7 +2853,7 @@ bool CBlock::CheckBlock(bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig) c
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, vtx)
     {
-        if (!tx.CheckTransaction())
+        if (!CheckTransaction(tx))
             return DoS(tx.nDoS, error("CheckBlock() : CheckTransaction failed"));
 
         // ppcoin: check transaction timestamp

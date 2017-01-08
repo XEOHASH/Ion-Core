@@ -9,6 +9,7 @@
 #include "serialize.h"
 #include "uint256.h"
 #include "version.h"
+#include "util.h"
 
 #include <openssl/bn.h>
 
@@ -24,6 +25,7 @@ public:
     explicit bignum_error(const std::string& str) : std::runtime_error(str) {}
 };
 
+extern signed char HexDigit(char c);
 
 /** RAII encapsulated BN_CTX (OpenSSL bignum context) */
 class CAutoBN_CTX

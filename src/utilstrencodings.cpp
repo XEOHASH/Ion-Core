@@ -71,6 +71,29 @@ string EncodeBase64(const string& str)
     return EncodeBase64((const unsigned char*)str.c_str(), str.size());
 }
 
+const signed char p_util_hexdigit[256] =
+{ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  0,1,2,3,4,5,6,7,8,9,-1,-1,-1,-1,-1,-1,
+  -1,0xa,0xb,0xc,0xd,0xe,0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,0xa,0xb,0xc,0xd,0xe,0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, };
+
+signed char HexDigit(char c)
+{
+    return p_util_hexdigit[(unsigned char)c];
+}
+
 vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
 {
     static const int decode64_table[256] =
@@ -455,17 +478,17 @@ std::string FormatParagraph(const std::string in, size_t width, size_t indent)
     return out.str();
 }
 
-std::string i64tostr(int64_t n)
+inline std::string i64tostr(int64_t n)
 {
     return strprintf("%d", n);
 }
 
-std::string itostr(int n)
+inline std::string itostr(int n)
 {
     return strprintf("%d", n);
 }
 
-int64_t atoi64(const char* psz)
+inline int64_t atoi64(const char* psz)
 {
 #ifdef _MSC_VER
     return _atoi64(psz);
@@ -474,7 +497,7 @@ int64_t atoi64(const char* psz)
 #endif
 }
 
-int64_t atoi64(const std::string& str)
+inline int64_t atoi64(const std::string& str)
 {
 #ifdef _MSC_VER
     return _atoi64(str.c_str());
@@ -483,7 +506,7 @@ int64_t atoi64(const std::string& str)
 #endif
 }
 
-int atoi(const std::string& str)
+inline int atoi(const std::string& str)
 {
     return atoi(str.c_str());
 }

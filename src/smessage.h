@@ -202,12 +202,14 @@ public:
     bool            fReceiveEnabled;
     bool            fReceiveAnon;
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(this->sAddress);
         READWRITE(this->fReceiveEnabled);
         READWRITE(this->fReceiveAnon);
-    );
+    };
 };
 
 class SecMsgOptions
@@ -273,15 +275,17 @@ public:
     std::string               sAddrOutbox;    // owned address this copy was encrypted with
     std::vector<uint8_t>      vchMessage;     // message header + encryped payload
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(this->timeReceived);
         READWRITE(this->status);
         READWRITE(this->folderId);
         READWRITE(this->sAddrTo);
         READWRITE(this->sAddrOutbox);
         READWRITE(this->vchMessage);
-    );
+    };
 };
 
 class SecMsgDB

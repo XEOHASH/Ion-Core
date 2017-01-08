@@ -12,6 +12,7 @@
 #include "ui_interface.h"
 #include "darksend.h"
 #include "wallet/wallet.h"
+#include "streams.h"
 
 #ifdef WIN32
 #include <string.h>

@@ -31,10 +31,13 @@
 #define UEND(a)             ((unsigned char*)&((&(a))[1]))
 #define ARRAYLEN(array)     (sizeof(array)/sizeof((array)[0]))
 
+#define UVOIDBEGIN(a)        ((void*)&(a))
+#define CVOIDBEGIN(a)        ((const void*)&(a))
+#define UINTBEGIN(a)        ((uint32_t*)&(a))
+#define CUINTBEGIN(a)        ((const uint32_t*)&(a))
+
 /** This is needed because the foreach macro can't get over the comma in pair<t1, t2> */
 #define PAIRTYPE(t1, t2)    std::pair<t1, t2>
-
-
 
 std::vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid = NULL);
 std::string DecodeBase64(const std::string& str);

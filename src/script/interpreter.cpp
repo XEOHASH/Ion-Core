@@ -8,7 +8,6 @@
 
 #include "interpreter.h"
 
-#include "primitives/transaction.h"
 #include "base58.h"
 #include "crypto/ripemd160.h"
 #include "crypto/sha1.h"
@@ -18,6 +17,7 @@
 #include "script/script.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
+#include "primitives/transaction.h"
 
 using namespace std;
 

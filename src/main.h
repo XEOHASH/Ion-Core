@@ -13,9 +13,8 @@
 #include "script/sigcache.h"
 #include "script/standard.h"
 #include "script/script.h"
-
-#include "compressor.h"
-
+#include "utilstrencodings.h"
+#include "streams.h"
 #include "scrypt.h"
 
 #include <list>
@@ -238,7 +237,13 @@ public:
         nTxPos = nTxPosIn;
     }
 
-    IMPLEMENT_SERIALIZE( READWRITE(FLATDATA(*this)); )
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(FLATDATA(*this));
+	}
+	
     void SetNull() { nFile = (unsigned int) -1; nBlockPos = 0; nTxPos = 0; }
     bool IsNull() const { return (nFile == (unsigned int) -1); }
 
@@ -298,6 +303,38 @@ unsigned int GetLegacySigOpCount(const CTransaction& tx);
  */
 unsigned int GetP2SHSigOpCount(const CTransaction& tx, const MapPrevTx& mapInputs);
 
+/** Fetch from memory and/or disk. inputsRet keys are transaction hashes.
+
+     @param[in] txdb    Transaction database
+     @param[in] mapTestPool List of pending changes to the transaction index database
+     @param[in] fBlock  True if being called to add a new best-block to the chain
+     @param[in] fMiner  True if being called by CreateNewBlock
+     @param[out] inputsRet  Pointers to this transaction's inputs
+     @param[out] fInvalid   returns true if transaction is invalid
+     @return    Returns true if all inputs are in txdb or mapTestPool
+*/
+
+bool FetchInputs(const CTransaction& tx, CTxDB& txdb, const std::map<uint256, CTxIndex>& mapTestPool,
+                     bool fBlock, bool fMiner, MapPrevTx& inputsRet, bool& fInvalid);
+
+/** Sanity check previous transactions, then, if all checks succeed,
+        mark them as spent by this transaction.
+
+        @param[in] inputs   Previous transactions (from FetchInputs)
+        @param[out] mapTestPool Keeps track of inputs that need to be updated on disk
+        @param[in] posThisTx    Position of this transaction on disk
+        @param[in] pindexBlock
+        @param[in] fBlock   true if called from ConnectBlock
+        @param[in] fMiner   true if called from CreateNewBlock
+        @return Returns true if all checks succeed
+*/
+
+bool ConnectInputs(const CTransaction& tx, CTxDB& txdb, MapPrevTx inputs,
+                       std::map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
+                       const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, unsigned int flags = STANDARD_SCRIPT_VERIFY_FLAGS, bool fValidateSig = true);
+
+bool CheckTransaction(const CTransaction& tx);
+
 inline bool AllowFree(double dPriority)
 {
     // Large (in bytes) low-priority (new, small-coin) transactions
@@ -346,14 +383,16 @@ public:
     }
 
 
-    IMPLEMENT_SERIALIZE
-    (
-        nSerSize += SerReadWrite(s, *(CTransaction*)this, nType, nVersion, ser_action);
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+//        nSerSize += SerReadWrite(s, *(CTransaction*)this, nType, nVersion, ser_action);
         nVersion = this->nVersion;
         READWRITE(hashBlock);
         READWRITE(vMerkleBranch);
         READWRITE(nIndex);
-    )
+    }
 
     int SetMerkleBranch(const CBlock* pblock=NULL);
 
@@ -394,13 +433,15 @@ public:
         vSpent.resize(nOutputs);
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
         READWRITE(pos);
         READWRITE(vSpent);
-    )
+    }
 
     void SetNull()
     {
@@ -471,8 +512,10 @@ public:
         SetNull();
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
         READWRITE(hashPrevBlock);
@@ -487,12 +530,12 @@ public:
             READWRITE(vtx);
             READWRITE(vchBlockSig);
         }
-        else if (fRead)
+        else if (ser_action.ForRead())
         {
             const_cast<CBlock*>(this)->vtx.clear();
             const_cast<CBlock*>(this)->vchBlockSig.clear();
         }
-    )
+    }
 
     void SetNull()
     {
@@ -958,8 +1001,10 @@ public:
         hashNext = (pnext ? pnext->GetBlockHash() : 0);
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
 
@@ -977,7 +1022,7 @@ public:
             READWRITE(prevoutStake);
             READWRITE(nStakeTime);
         }
-        else if (fRead)
+        else if (ser_action.ForRead())
         {
             const_cast<CDiskBlockIndex*>(this)->prevoutStake.SetNull();
             const_cast<CDiskBlockIndex*>(this)->nStakeTime = 0;
@@ -992,7 +1037,7 @@ public:
         READWRITE(nBits);
         READWRITE(nNonce);
         READWRITE(blockHash);
-    )
+    }
 
     uint256 GetBlockHash() const
     {
@@ -1062,12 +1107,14 @@ public:
         vHave = vHaveIn;
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
         READWRITE(vHave);
-    )
+    }
 
     void SetNull()
     {
